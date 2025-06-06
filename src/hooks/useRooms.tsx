@@ -1,7 +1,7 @@
 
 import { useRoomData } from './rooms/useRoomData';
 import { useRoomOperations } from './rooms/useRoomOperations';
-import { useRoomRealtime } from './rooms/useRoomRealtime';
+import { useRoomsRealtime } from './rooms/useRoomsRealtime';
 
 export type { Room } from './rooms/types';
 
@@ -9,8 +9,8 @@ export const useRooms = (userId?: string) => {
   const { rooms, loading, fetchRooms } = useRoomData(userId);
   const { createRoom, joinRoom } = useRoomOperations(userId, fetchRooms);
   
-  // Set up real-time subscriptions
-  useRoomRealtime(userId, fetchRooms);
+  // Set up real-time subscriptions for user's rooms list
+  useRoomsRealtime(userId, fetchRooms);
 
   return {
     rooms,

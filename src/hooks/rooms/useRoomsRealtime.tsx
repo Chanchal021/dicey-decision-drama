@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useRoomRealtime = (userId?: string, refetchRooms?: () => void) => {
+export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => {
   useEffect(() => {
     if (!userId || !refetchRooms) return;
 
