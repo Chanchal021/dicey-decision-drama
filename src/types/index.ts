@@ -12,6 +12,13 @@ export type Screen =
   | "results" 
   | "past-decisions";
 
+export interface RoomOption {
+  id: string;
+  text: string;
+  submitted_by: string;
+  submitted_at: string;
+}
+
 export interface Room {
   id: string;
   title: string;
@@ -19,7 +26,8 @@ export interface Room {
   code: string;
   max_participants?: number;
   creator_id: string;
-  options: string[];
+  options: string[]; // Keep for backward compatibility
+  room_options?: RoomOption[]; // New detailed options
   is_voting_active: boolean;
   final_choice?: string;
   tiebreaker_used?: 'dice' | 'spinner' | 'coin';
