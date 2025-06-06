@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import LandingScreen from "@/components/LandingPage";
 import LoginScreen from "@/components/LoginScreen";
 import Dashboard from "@/components/Dashboard";
 import CreateRoom from "@/components/CreateRoom";
@@ -9,8 +9,10 @@ import RoomLobby from "@/components/RoomLobby";
 import VotingScreen from "@/components/VotingScreen";
 import ResultsScreen from "@/components/ResultsScreen";
 import PastDecisions from "@/components/PastDecisions";
+import LandingScreen from "@/components/LandingScreen";
 
 export type Screen = 
+  | "landing" 
   | "login" 
   | "dashboard" 
   | "create-room" 
@@ -44,7 +46,7 @@ export interface User {
 }
 
 const Index = () => {
-  const [currentScreen, setCurrentScreen] = useState<Screen>("login");
+  const [currentScreen, setCurrentScreen] = useState<Screen>("landing");
   const [user, setUser] = useState<User | null>(null);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -57,6 +59,8 @@ const Index = () => {
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case "landing":
+        return <LandingScreen onNavigate={setCurrentScreen} />;
       case "login":
         return <LoginScreen onLogin={setUser} onNavigate={setCurrentScreen} />;
       case "dashboard":
@@ -87,7 +91,7 @@ const Index = () => {
       case "past-decisions":
         return <PastDecisions user={user} rooms={rooms} onNavigate={setCurrentScreen} />;
       default:
-        return <LoginScreen onLogin={setUser} onNavigate={setCurrentScreen} />;
+        return <LandingScreen onNavigate={setCurrentScreen} />;
     }
   };
 
