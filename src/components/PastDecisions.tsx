@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,7 +93,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
             <CardContent className="text-center py-6">
               <div className="text-3xl mb-2">🎭</div>
               <div className="text-2xl font-bold text-pink-600">
-                {userRooms.filter(room => room.tiebreakerUsed).length}
+                {userRooms.filter(room => room.tiebreaker_used).length}
               </div>
               <div className="text-gray-600">Tiebreakers Used</div>
             </CardContent>
@@ -102,7 +103,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
             <CardContent className="text-center py-6">
               <div className="text-3xl mb-2">👥</div>
               <div className="text-2xl font-bold text-blue-600">
-                {Math.round(userRooms.reduce((sum, room) => sum + room.participants.length, 0) / userRooms.length || 0)}
+                {Math.round(userRooms.reduce((sum, room) => sum + (room.participants?.length || 0), 0) / userRooms.length || 0)}
               </div>
               <div className="text-gray-600">Avg Group Size</div>
             </CardContent>
@@ -151,7 +152,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                           )}
                         </div>
                         <div className="text-2xl ml-4">
-                          {getGroupSizeEmoji(room.participants.length)}
+                          {getGroupSizeEmoji(room.participants?.length || 0)}
                         </div>
                       </div>
                     </CardHeader>
@@ -162,7 +163,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                           <Trophy className="w-5 h-5 text-yellow-500" />
                           <span className="font-semibold text-gray-700">Winner:</span>
                           <span className="font-bold text-purple-600 text-lg">
-                            {room.finalChoice}
+                            {room.final_choice}
                           </span>
                         </div>
 
@@ -170,22 +171,22 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{room.resolved_at?.toLocaleDateString()}</span>
+                            <span>{new Date(room.resolved_at || '').toLocaleDateString()}</span>
                           </div>
                           
                           <div className="flex items-center space-x-1">
                             <Users className="w-4 h-4" />
-                            <span>{room.participants.length} participants</span>
+                            <span>{room.participants?.length || 0} participants</span>
                           </div>
 
-                          {room.tiebreakerUsed && (
+                          {room.tiebreaker_used && (
                             <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200">
-                              <span className="mr-1">{getTiebreakerEmoji(room.tiebreakerUsed)}</span>
-                              Tiebreaker: {room.tiebreakerUsed}
+                              <span className="mr-1">{getTiebreakerEmoji(room.tiebreaker_used)}</span>
+                              Tiebreaker: {room.tiebreaker_used}
                             </Badge>
                           )}
 
-                          {room.creator === user.id && (
+                          {room.creator_id === user.id && (
                             <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                               <span className="mr-1">👑</span>
                               Creator
@@ -197,13 +198,13 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                         <div>
                           <div className="text-sm text-gray-600 mb-1">Participants:</div>
                           <div className="flex flex-wrap gap-1">
-                            {room.participants.map(participant => (
+                            {room.participants?.map(participant => (
                               <Badge
-                                key={participant}
-                                variant={participant === user.name ? "default" : "secondary"}
+                                key={participant.id}
+                                variant={participant.id === user.id ? "default" : "secondary"}
                                 className="text-xs"
                               >
-                                {participant === user.name ? `${participant} (You)` : participant}
+                                {participant.id === user.id ? `${participant.display_name} (You)` : participant.display_name}
                               </Badge>
                             ))}
                           </div>

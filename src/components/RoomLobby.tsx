@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
 
     const updatedRoom = {
       ...room,
-      isVotingActive: true
+      is_voting_active: true
     };
     onRoomUpdated(updatedRoom);
     onNavigate("voting");
@@ -132,25 +133,25 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
           <CardHeader>
             <CardTitle className="flex items-center text-xl">
               <Users className="w-5 h-5 mr-2 text-blue-500" />
-              Participants ({room.participants.length})
-              {room.maxParticipants && ` / ${room.maxParticipants}`}
+              Participants ({room.participants?.length || 0})
+              {room.max_participants && ` / ${room.max_participants}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {room.participants.map((participant, index) => (
+              {room.participants?.map((participant, index) => (
                 <motion.div
-                  key={index}
+                  key={participant.id}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <Badge 
-                    variant={participant === user.name ? "default" : "secondary"}
+                    variant={participant.id === user.id ? "default" : "secondary"}
                     className="text-sm px-3 py-1"
                   >
-                    {participant === user.name ? `${participant} (You)` : participant}
-                    {room.creator === user.id && participant === user.name && " 👑"}
+                    {participant.id === user.id ? `${participant.display_name} (You)` : participant.display_name}
+                    {room.creator_id === user.id && participant.id === user.id && " 👑"}
                   </Badge>
                 </motion.div>
               ))}

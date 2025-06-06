@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,22 +122,22 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span className="flex items-center">
                               <Trophy className="w-4 h-4 mr-1 text-yellow-500" />
-                              {room.finalChoice}
+                              {room.final_choice}
                             </span>
-                            <span>{room.resolved_at?.toLocaleDateString()}</span>
-                            {room.tiebreakerUsed && (
+                            <span>{new Date(room.resolved_at || '').toLocaleDateString()}</span>
+                            {room.tiebreaker_used && (
                               <span className="flex items-center bg-gradient-to-r from-purple-100 to-pink-100 px-2 py-1 rounded-full">
-                                {room.tiebreakerUsed === 'dice' && '🎲'}
-                                {room.tiebreakerUsed === 'coin' && '🪙'}
-                                {room.tiebreakerUsed === 'spinner' && '🎡'}
+                                {room.tiebreaker_used === 'dice' && '🎲'}
+                                {room.tiebreaker_used === 'coin' && '🪙'}
+                                {room.tiebreaker_used === 'spinner' && '🎡'}
                                 Tiebreaker
                               </span>
                             )}
                           </div>
                         </div>
                         <div className="text-2xl">
-                          {room.participants.length > 5 ? '🎊' : 
-                           room.participants.length > 3 ? '🎉' : '✨'}
+                          {(room.participants?.length || 0) > 5 ? '🎊' : 
+                           (room.participants?.length || 0) > 3 ? '🎉' : '✨'}
                         </div>
                       </div>
                     </CardContent>

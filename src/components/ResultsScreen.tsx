@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -44,9 +45,9 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
       
       const updatedRoom = {
         ...room,
-        finalChoice: randomWinner,
-        tiebreakerUsed: method,
-        resolvedAt: new Date()
+        final_choice: randomWinner,
+        tiebreaker_used: method,
+        resolved_at: new Date().toISOString()
       };
 
       setTimeout(() => {
@@ -109,7 +110,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
               <h2 className="text-4xl font-bold text-purple-600 mb-8">
                 🎭 Tiebreaker Time! 🎭
               </h2>
-              <TiebreakerAnimation method={room.tiebreakerUsed!} />
+              <TiebreakerAnimation method={room.tiebreaker_used!} />
               <p className="text-xl text-gray-600 mt-8">
                 Let fate decide...
               </p>
@@ -147,8 +148,8 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
                 {tiebreakerResult}
               </div>
               <p className="text-lg text-gray-600 mb-8">
-                Decided by {room.tiebreakerUsed === 'dice' ? '🎲 dice roll' : 
-                          room.tiebreakerUsed === 'coin' ? '🪙 coin flip' : 
+                Decided by {room.tiebreaker_used === 'dice' ? '🎲 dice roll' : 
+                          room.tiebreaker_used === 'coin' ? '🪙 coin flip' : 
                           '🎡 spinner'}
               </p>
               <Button
@@ -249,8 +250,8 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
                   onClick={() => {
                     const updatedRoom = {
                       ...room,
-                      finalChoice: winners[0][0],
-                      resolvedAt: new Date()
+                      final_choice: winners[0][0],
+                      resolved_at: new Date().toISOString()
                     };
                     onComplete(updatedRoom);
                   }}
