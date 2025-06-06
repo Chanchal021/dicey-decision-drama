@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Screen, User, Room } from "@/types";
-import { Users, Plus, X, Play, Copy } from "lucide-react";
+import { Users, Plus, X, Play, Copy, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,7 +19,7 @@ interface RoomLobbyProps {
 
 const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) => {
   const [newOption, setNewOption] = useState("");
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -27,17 +27,44 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
   if (!room || !user) return null;
 
   const isCreator = room.creator_id === user.id;
+  const roomOptions = room.room_options || [];
 
   const handleAddOption = async () => {
     if (!newOption.trim() || isSubmitting) return;
     
+    if (room.is_voting_active) {
+      toast({
+        title: "Cannot add options",
+        description: "Voting is already active",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      const updatedOptions = [...room.options, newOption.trim()];
+      // Get user profile for display name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+
+      const newRoomOption = {
+        id: crypto.randomUUID(),
+        text: newOption.trim(),
+        submitted_by: user.id,
+        submitted_at: new Date().toISOString()
+      };
+
+      const updatedOptions = [...roomOptions, newRoomOption];
       
       const { error } = await supabase
         .from('rooms')
-        .update({ options: updatedOptions })
+        .update({ 
+          room_options: updatedOptions,
+          options: updatedOptions.map(opt => opt.text) // Keep backward compatibility
+        })
         .eq('id', room.id);
 
       if (error) {
@@ -66,7 +93,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
     }
   };
 
-  const handleRemoveOption = async (index: number) => {
+  const handleRemoveOption = async (optionId: string) => {
     if (room.is_voting_active) {
       toast({
         title: "Cannot remove options",
@@ -76,12 +103,28 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
       return;
     }
 
+    const option = roomOptions.find(opt => opt.id === optionId);
+    if (!option) return;
+
+    // Only allow removing own options or if user is creator
+    if (option.submitted_by !== user.id && !isCreator) {
+      toast({
+        title: "Cannot remove option",
+        description: "You can only remove your own options",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      const updatedOptions = room.options.filter((_, i) => i !== index);
+      const updatedOptions = roomOptions.filter(opt => opt.id !== optionId);
       
       const { error } = await supabase
         .from('rooms')
-        .update({ options: updatedOptions })
+        .update({ 
+          room_options: updatedOptions,
+          options: updatedOptions.map(opt => opt.text) // Keep backward compatibility
+        })
         .eq('id', room.id);
 
       if (error) {
@@ -102,7 +145,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
     }
   };
 
-  const handleEditOption = (index: number) => {
+  const handleEditOption = (optionId: string) => {
     if (room.is_voting_active) {
       toast({
         title: "Cannot edit options",
@@ -111,21 +154,47 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
       });
       return;
     }
-    setEditingIndex(index);
-    setEditValue(room.options[index]);
+
+    const option = roomOptions.find(opt => opt.id === optionId);
+    if (!option) return;
+
+    // Only allow editing own options or if user is creator
+    if (option.submitted_by !== user.id && !isCreator) {
+      toast({
+        title: "Cannot edit option",
+        description: "You can only edit your own options",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setEditingOptionId(optionId);
+    setEditValue(option.text);
   };
 
   const handleSaveEdit = async () => {
-    if (!editValue.trim() || editingIndex === null) return;
+    if (!editValue.trim() || editingOptionId === null) return;
+    
+    if (room.is_voting_active) {
+      toast({
+        title: "Cannot edit options",
+        description: "Voting is already active",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
-      const updatedOptions = room.options.map((option, i) => 
-        i === editingIndex ? editValue.trim() : option
+      const updatedOptions = roomOptions.map(option => 
+        option.id === editingOptionId ? { ...option, text: editValue.trim() } : option
       );
       
       const { error } = await supabase
         .from('rooms')
-        .update({ options: updatedOptions })
+        .update({ 
+          room_options: updatedOptions,
+          options: updatedOptions.map(opt => opt.text) // Keep backward compatibility
+        })
         .eq('id', room.id);
 
       if (error) {
@@ -137,7 +206,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
         return;
       }
 
-      setEditingIndex(null);
+      setEditingOptionId(null);
       setEditValue("");
       toast({
         title: "Option updated",
@@ -149,7 +218,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
   };
 
   const handleStartVoting = async () => {
-    if (room.options.length < 2) {
+    if (roomOptions.length < 2) {
       toast({
         title: "Need more options! 🤔",
         description: "Add at least 2 options to start voting",
@@ -190,6 +259,15 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
       title: "Copied! 📋",
       description: "Room code copied to clipboard",
     });
+  };
+
+  const getSubmitterName = (submittedBy: string) => {
+    const participant = room.participants?.find(p => p.user_id === submittedBy);
+    return participant?.display_name || 'Unknown';
+  };
+
+  const canEditOption = (option: any) => {
+    return !room.is_voting_active && (option.submitted_by === user.id || isCreator);
   };
 
   return (
@@ -289,15 +367,15 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
             {/* Options List */}
             <AnimatePresence>
               <div className="space-y-2">
-                {room.options.map((option, index) => (
+                {roomOptions.map((option, index) => (
                   <motion.div
-                    key={index}
+                    key={option.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg"
                   >
-                    {editingIndex === index ? (
+                    {editingOptionId === option.id ? (
                       <>
                         <Input
                           value={editValue}
@@ -305,14 +383,14 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
                           className="flex-1"
                           onKeyDown={(e) => {
                             if (e.key === "Enter") handleSaveEdit();
-                            if (e.key === "Escape") setEditingIndex(null);
+                            if (e.key === "Escape") setEditingOptionId(null);
                           }}
                           autoFocus
                         />
                         <Button size="sm" onClick={handleSaveEdit}>
                           ✓
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setEditingIndex(null)}>
+                        <Button size="sm" variant="outline" onClick={() => setEditingOptionId(null)}>
                           ✕
                         </Button>
                       </>
@@ -321,21 +399,34 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
                         <div className="text-lg font-medium text-purple-600 mr-2">
                           {index + 1}.
                         </div>
-                        <div 
-                          className="flex-1 text-gray-800 cursor-pointer" 
-                          onClick={() => handleEditOption(index)}
-                        >
-                          {option}
+                        <div className="flex-1">
+                          <div className="text-gray-800 font-medium">
+                            {option.text}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Submitted by {getSubmitterName(option.submitted_by)}
+                            {option.submitted_by === user.id && " (you)"}
+                          </div>
                         </div>
-                        {!room.is_voting_active && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleRemoveOption(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
+                        {canEditOption(option) && (
+                          <div className="flex space-x-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleEditOption(option.id)}
+                              className="text-blue-500 hover:text-blue-700"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleRemoveOption(option.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         )}
                       </>
                     )}
@@ -344,7 +435,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
               </div>
             </AnimatePresence>
 
-            {room.options.length === 0 && (
+            {roomOptions.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <div className="text-4xl mb-2">🤷‍♀️</div>
                 <p>No options yet. Add some choices to get started!</p>
@@ -362,7 +453,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
           >
             <Button
               onClick={handleStartVoting}
-              disabled={room.options.length < 2}
+              disabled={roomOptions.length < 2}
               className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-xl px-8 py-4 rounded-full"
             >
               <Play className="w-6 h-6 mr-2" />
