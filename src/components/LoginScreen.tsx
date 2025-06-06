@@ -4,29 +4,47 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Screen, User } from "@/pages/Index";
+import { Screen } from "@/pages/Index";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 interface LoginScreenProps {
-  onLogin: (user: User) => void;
   onNavigate: (screen: Screen) => void;
 }
 
-const LoginScreen = ({ onLogin, onNavigate }: LoginScreenProps) => {
+const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp, signIn, user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && password && (name || !isSignup)) {
-      const user: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        name: name || email.split('@')[0]
-      };
-      onLogin(user);
+  // Redirect to dashboard if user is already logged in
+  useEffect(() => {
+    if (user) {
       onNavigate("dashboard");
+    }
+  }, [user, onNavigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (isSignup) {
+        const { error } = await signUp(email, password, name || email.split('@')[0]);
+        if (!error) {
+          // User will be redirected after email confirmation
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        if (!error) {
+          onNavigate("dashboard");
+        }
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -102,17 +120,28 @@ const LoginScreen = ({ onLogin, onNavigate }: LoginScreenProps) => {
             <CardFooter className="flex flex-col space-y-3">
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
-                {isSignup ? "Sign Up & Start Playing! 🚀" : "Login & Let's Decide! ✨"}
+                {isLoading ? "Loading..." : (isSignup ? "Sign Up & Start Playing! 🚀" : "Login & Let's Decide! ✨")}
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setIsSignup(!isSignup)}
                 className="text-purple-600 hover:text-purple-700"
+                disabled={isLoading}
               >
                 {isSignup ? "Already have an account? Login" : "New here? Create account"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onNavigate("landing")}
+                className="text-gray-500 hover:text-gray-700"
+                disabled={isLoading}
+              >
+                ← Back to Home
               </Button>
             </CardFooter>
           </form>

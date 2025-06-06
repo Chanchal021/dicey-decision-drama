@@ -9,16 +9,157 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      participants: {
+        Row: {
+          display_name: string
+          id: string
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          display_name: string
+          id?: string
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          id?: string
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          code: string
+          created_at: string
+          creator_id: string
+          description: string | null
+          final_choice: string | null
+          id: string
+          is_voting_active: boolean
+          max_participants: number | null
+          options: string[]
+          resolved_at: string | null
+          tiebreaker_used:
+            | Database["public"]["Enums"]["tiebreaker_method"]
+            | null
+          title: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          final_choice?: string | null
+          id?: string
+          is_voting_active?: boolean
+          max_participants?: number | null
+          options?: string[]
+          resolved_at?: string | null
+          tiebreaker_used?:
+            | Database["public"]["Enums"]["tiebreaker_method"]
+            | null
+          title: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          final_choice?: string | null
+          id?: string
+          is_voting_active?: boolean
+          max_participants?: number | null
+          options?: string[]
+          resolved_at?: string | null
+          tiebreaker_used?:
+            | Database["public"]["Enums"]["tiebreaker_method"]
+            | null
+          title?: string
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          id: string
+          option: string
+          room_id: string
+          user_id: string
+          voted_at: string
+        }
+        Insert: {
+          id?: string
+          option: string
+          room_id: string
+          user_id: string
+          voted_at?: string
+        }
+        Update: {
+          id?: string
+          option?: string
+          room_id?: string
+          user_id?: string
+          voted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_room_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      tiebreaker_method: "dice" | "spinner" | "coin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +274,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      tiebreaker_method: ["dice", "spinner", "coin"],
+    },
   },
 } as const

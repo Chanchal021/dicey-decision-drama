@@ -5,59 +5,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Screen, User, Room } from "@/pages/Index";
+import { Screen } from "@/pages/Index";
 import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface JoinRoomProps {
-  user: User | null;
-  rooms: Room[];
-  onRoomJoined: (room: Room) => void;
+  onRoomJoined: (roomCode: string, displayName: string) => Promise<void>;
   onNavigate: (screen: Screen) => void;
 }
 
-const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
+const JoinRoom = ({ onRoomJoined, onNavigate }: JoinRoomProps) => {
   const [roomCode, setRoomCode] = useState("");
-  const { toast } = useToast();
+  const [displayName, setDisplayName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roomCode.trim() || !user) return;
+    if (!roomCode.trim() || !displayName.trim() || !user) return;
 
-    console.log("Looking for room with code:", roomCode.trim());
-    console.log("Available rooms:", rooms);
-    console.log("Room codes:", rooms.map(r => r.code));
-
-    const room = rooms.find(r => r.code.toLowerCase() === roomCode.trim().toLowerCase());
-    
-    if (!room) {
-      toast({
-        title: "Room not found 😕",
-        description: `No room found with code "${roomCode}". Available rooms: ${rooms.length}`,
-        variant: "destructive"
-      });
-      return;
+    setIsLoading(true);
+    try {
+      await onRoomJoined(roomCode.trim(), displayName.trim());
+    } finally {
+      setIsLoading(false);
     }
-
-    if (room.maxParticipants && room.participants.length >= room.maxParticipants) {
-      toast({
-        title: "Room is full 🚪",
-        description: "This room has reached its participant limit",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!room.participants.includes(user.name)) {
-      room.participants.push(user.name);
-    }
-
-    toast({
-      title: "Joined successfully! 🎉",
-      description: `Welcome to ${room.title}`,
-    });
-    
-    onRoomJoined(room);
   };
 
   return (
@@ -90,6 +62,21 @@ const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div>
+                <Label htmlFor="displayName" className="text-lg font-semibold">
+                  Your Display Name
+                </Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  placeholder="How should others see you?"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="text-lg h-12 mt-1"
+                  required
+                />
+              </div>
+              
+              <div>
                 <Label htmlFor="roomCode" className="text-lg font-semibold">
                   Room Code
                 </Label>
@@ -107,19 +94,11 @@ const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
 
               <Button
                 type="submit"
-                disabled={roomCode.length !== 6}
+                disabled={roomCode.length !== 6 || !displayName.trim() || isLoading}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
-                Join Room 🎯
+                {isLoading ? "Joining..." : "Join Room 🎯"}
               </Button>
-
-              {rooms.length > 0 && (
-                <div className="text-center text-sm text-gray-600">
-                  Debug: {rooms.length} room(s) available
-                  <br />
-                  Codes: {rooms.map(r => r.code).join(", ")}
-                </div>
-              )}
             </CardContent>
           </form>
 
