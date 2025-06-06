@@ -125,7 +125,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       console.log('Joining room with code:', roomCode);
       
       // Find room by code with exact match and ensure it's open
-      const { data: room, error: roomError } = await supabase
+      const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .select('*')
         .eq('code', roomCode.toUpperCase())
@@ -136,6 +136,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         console.error('Error searching for room:', roomError);
         throw roomError;
       }
+
+      let room = roomData;
 
       if (!room) {
         console.error('Room not found with code:', roomCode);
