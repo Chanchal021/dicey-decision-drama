@@ -24,12 +24,12 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!room) return;
+    if (!room || !room.options) return;
     
-    // Calculate vote results
+    // Calculate vote results by counting votes per option
     const results = room.options.reduce((acc, option) => {
-      const voteCount = (room.votes || []).filter(vote => vote.option === option).length;
-      acc[option] = voteCount;
+      const voteCount = (room.votes || []).filter(vote => vote.option_id === option.id).length;
+      acc[option.text] = voteCount;
       return acc;
     }, {} as Record<string, number>);
     
@@ -53,11 +53,14 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
       const randomWinner = winners[Math.floor(Math.random() * winners.length)][0];
       setTiebreakerResult(randomWinner);
       
+      // Find the winning option ID
+      const winningOption = room.options?.find(opt => opt.text === randomWinner);
+      
       try {
         const { error } = await supabase
           .from('rooms')
           .update({
-            final_choice: randomWinner,
+            final_option_id: winningOption?.id,
             tiebreaker_used: method,
             resolved_at: new Date().toISOString()
           })
@@ -79,7 +82,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
         setIsAnimating(false);
         const updatedRoom = {
           ...room,
-          final_choice: randomWinner,
+          final_option_id: winningOption?.id,
           tiebreaker_used: method,
           resolved_at: new Date().toISOString()
         };
@@ -89,11 +92,14 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
   };
 
   const handleFinish = async (winner: string) => {
+    // Find the winning option ID
+    const winningOption = room.options?.find(opt => opt.text === winner);
+    
     try {
       const { error } = await supabase
         .from('rooms')
         .update({
-          final_choice: winner,
+          final_option_id: winningOption?.id,
           resolved_at: new Date().toISOString()
         })
         .eq('id', room.id);
@@ -110,7 +116,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
 
       const updatedRoom = {
         ...room,
-        final_choice: winner,
+        final_option_id: winningOption?.id,
         resolved_at: new Date().toISOString()
       };
       onComplete(updatedRoom);

@@ -21,7 +21,7 @@ const DecisionOptions = ({ room, user }: DecisionOptionsProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const roomOptions = room.room_options || [];
+  const roomOptions = room.options || [];
 
   const handleAddOption = async () => {
     if (!newOption.trim() || isSubmitting) return;
@@ -37,22 +37,13 @@ const DecisionOptions = ({ room, user }: DecisionOptionsProps) => {
     
     setIsSubmitting(true);
     try {
-      const newRoomOption = {
-        id: crypto.randomUUID(),
-        text: newOption.trim(),
-        submitted_by: user.id,
-        submitted_at: new Date().toISOString()
-      };
-
-      const updatedOptions = [...roomOptions, newRoomOption];
-      
       const { error } = await supabase
-        .from('rooms')
-        .update({ 
-          room_options: updatedOptions,
-          options: updatedOptions.map(opt => opt.text) // Keep backward compatibility
-        })
-        .eq('id', room.id);
+        .from('options')
+        .insert({
+          room_id: room.id,
+          submitted_by: user.id,
+          text: newOption.trim()
+        });
 
       if (error) {
         toast({
@@ -104,15 +95,10 @@ const DecisionOptions = ({ room, user }: DecisionOptionsProps) => {
     }
 
     try {
-      const updatedOptions = roomOptions.filter(opt => opt.id !== optionId);
-      
       const { error } = await supabase
-        .from('rooms')
-        .update({ 
-          room_options: updatedOptions,
-          options: updatedOptions.map(opt => opt.text) // Keep backward compatibility
-        })
-        .eq('id', room.id);
+        .from('options')
+        .delete()
+        .eq('id', optionId);
 
       if (error) {
         toast({
@@ -172,17 +158,10 @@ const DecisionOptions = ({ room, user }: DecisionOptionsProps) => {
     }
     
     try {
-      const updatedOptions = roomOptions.map(option => 
-        option.id === editingOptionId ? { ...option, text: editValue.trim() } : option
-      );
-      
       const { error } = await supabase
-        .from('rooms')
-        .update({ 
-          room_options: updatedOptions,
-          options: updatedOptions.map(opt => opt.text) // Keep backward compatibility
-        })
-        .eq('id', room.id);
+        .from('options')
+        .update({ text: editValue.trim() })
+        .eq('id', editingOptionId);
 
       if (error) {
         toast({
@@ -205,7 +184,7 @@ const DecisionOptions = ({ room, user }: DecisionOptionsProps) => {
   };
 
   const getSubmitterName = (submittedBy: string) => {
-    const participant = room.participants?.find(p => p.user_id === submittedBy);
+    const participant = room.room_participants?.find(p => p.user_id === submittedBy);
     return participant?.display_name || 'Unknown';
   };
 

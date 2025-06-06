@@ -52,6 +52,8 @@ export interface Room {
     option_id: string;
     created_at: string;
   }>;
+  // Computed properties for backward compatibility
+  final_choice?: string;
 }
 
 export type User = SupabaseUser;

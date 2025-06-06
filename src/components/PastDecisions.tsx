@@ -16,7 +16,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
   if (!user) return null;
 
   const userRooms = rooms.filter(room => 
-    room.participants?.some(p => p.id === user.id) && room.resolved_at
+    room.room_participants?.some(p => p.user_id === user.id) && room.resolved_at
   ).sort((a, b) => new Date(b.resolved_at || 0).getTime() - new Date(a.resolved_at || 0).getTime());
 
   const containerVariants = {
@@ -48,6 +48,13 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
     if (participantCount >= 5) return '🎉';
     if (participantCount >= 3) return '✨';
     return '👥';
+  };
+
+  // Helper function to get the final choice text
+  const getFinalChoice = (room: Room) => {
+    if (!room.final_option_id || !room.options) return 'Unknown';
+    const finalOption = room.options.find(opt => opt.id === room.final_option_id);
+    return finalOption?.text || 'Unknown';
   };
 
   return (
@@ -103,7 +110,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
             <CardContent className="text-center py-6">
               <div className="text-3xl mb-2">👥</div>
               <div className="text-2xl font-bold text-blue-600">
-                {Math.round(userRooms.reduce((sum, room) => sum + (room.participants?.length || 0), 0) / userRooms.length || 0)}
+                {Math.round(userRooms.reduce((sum, room) => sum + (room.room_participants?.length || 0), 0) / userRooms.length || 0)}
               </div>
               <div className="text-gray-600">Avg Group Size</div>
             </CardContent>
@@ -152,7 +159,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                           )}
                         </div>
                         <div className="text-2xl ml-4">
-                          {getGroupSizeEmoji(room.participants?.length || 0)}
+                          {getGroupSizeEmoji(room.room_participants?.length || 0)}
                         </div>
                       </div>
                     </CardHeader>
@@ -163,7 +170,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                           <Trophy className="w-5 h-5 text-yellow-500" />
                           <span className="font-semibold text-gray-700">Winner:</span>
                           <span className="font-bold text-purple-600 text-lg">
-                            {room.final_choice}
+                            {getFinalChoice(room)}
                           </span>
                         </div>
 
@@ -176,7 +183,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                           
                           <div className="flex items-center space-x-1">
                             <Users className="w-4 h-4" />
-                            <span>{room.participants?.length || 0} participants</span>
+                            <span>{room.room_participants?.length || 0} participants</span>
                           </div>
 
                           {room.tiebreaker_used && (
@@ -198,13 +205,13 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                         <div>
                           <div className="text-sm text-gray-600 mb-1">Participants:</div>
                           <div className="flex flex-wrap gap-1">
-                            {room.participants?.map(participant => (
+                            {room.room_participants?.map(participant => (
                               <Badge
                                 key={participant.id}
-                                variant={participant.id === user.id ? "default" : "secondary"}
+                                variant={participant.user_id === user.id ? "default" : "secondary"}
                                 className="text-xs"
                               >
-                                {participant.id === user.id ? `${participant.display_name} (You)` : participant.display_name}
+                                {participant.user_id === user.id ? `${participant.display_name} (You)` : participant.display_name}
                               </Badge>
                             ))}
                           </div>

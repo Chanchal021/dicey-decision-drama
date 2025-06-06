@@ -29,6 +29,13 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
     visible: { y: 0, opacity: 1 }
   };
 
+  // Helper function to get the final choice text
+  const getFinalChoice = (room: Room) => {
+    if (!room.final_option_id || !room.options) return 'Unknown';
+    const finalOption = room.options.find(opt => opt.id === room.final_option_id);
+    return finalOption?.text || 'Unknown';
+  };
+
   return (
     <div className="min-h-screen p-4">
       <motion.div
@@ -122,7 +129,7 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span className="flex items-center">
                               <Trophy className="w-4 h-4 mr-1 text-yellow-500" />
-                              {room.final_choice}
+                              {getFinalChoice(room)}
                             </span>
                             <span>{new Date(room.resolved_at || '').toLocaleDateString()}</span>
                             {room.tiebreaker_used && (
@@ -136,8 +143,8 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                           </div>
                         </div>
                         <div className="text-2xl">
-                          {(room.participants?.length || 0) > 5 ? '🎊' : 
-                           (room.participants?.length || 0) > 3 ? '🎉' : '✨'}
+                          {(room.room_participants?.length || 0) > 5 ? '🎊' : 
+                           (room.room_participants?.length || 0) > 3 ? '🎉' : '✨'}
                         </div>
                       </div>
                     </CardContent>

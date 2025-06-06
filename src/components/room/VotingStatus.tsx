@@ -16,7 +16,7 @@ interface VotingStatusProps {
 const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
   const { toast } = useToast();
   const isCreator = room.creator_id === user.id;
-  const roomOptions = room.room_options || [];
+  const roomOptions = room.options || [];
 
   const handleStartVoting = async () => {
     if (roomOptions.length < 2) {
