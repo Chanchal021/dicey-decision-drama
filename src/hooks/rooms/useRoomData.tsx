@@ -51,7 +51,7 @@ export const useRoomData = (userId?: string) => {
             display_name,
             joined_at
           ),
-          options (
+          options!options_room_id_fkey (
             id,
             text,
             submitted_by,
