@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Screen, User, Room } from "@/types";
-import { Plus, Clock, Users, Trophy } from "lucide-react";
+import { Plus, Clock, Users, Trophy, ArrowLeft } from "lucide-react";
 
 interface DashboardProps {
   user: User | null;
@@ -44,6 +44,18 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
         animate="visible"
         className="max-w-4xl mx-auto"
       >
+        {/* Back Button */}
+        <motion.div variants={itemVariants} className="mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate("landing")}
+            className="flex items-center gap-2 text-white/80 hover:text-white hover:bg-white/10"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </motion.div>
+
         {/* Header */}
         <motion.div variants={itemVariants} className="text-center mb-8">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
