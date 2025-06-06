@@ -52,10 +52,10 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 cursor-pointer group"
                 onClick={() => onNavigate("create-room")}>
             <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-google-green to-google-blue rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Plus className="w-8 h-8 text-white" />
               </div>
-              <CardTitle className="text-2xl text-google-green">Create New Room</CardTitle>
+              <CardTitle className="text-2xl text-green-600">Create New Room</CardTitle>
               <CardDescription className="text-lg">
                 Start a new decision session with your friends! 🎲
               </CardDescription>
@@ -65,10 +65,10 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 cursor-pointer group"
                 onClick={() => onNavigate("join-room")}>
             <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-google-blue to-google-red rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Users className="w-8 h-8 text-white" />
               </div>
-              <CardTitle className="text-2xl text-google-blue">Join Room</CardTitle>
+              <CardTitle className="text-2xl text-purple-600">Join Room</CardTitle>
               <CardDescription className="text-lg">
                 Got a room code? Jump in and start voting! 🗳️
               </CardDescription>
@@ -121,12 +121,12 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                           <h3 className="text-xl font-bold text-gray-800 mb-1">{room.title}</h3>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span className="flex items-center">
-                              <Trophy className="w-4 h-4 mr-1 text-google-yellow" />
+                              <Trophy className="w-4 h-4 mr-1 text-yellow-500" />
                               {room.finalChoice}
                             </span>
                             <span>{room.resolvedAt?.toLocaleDateString()}</span>
                             {room.tiebreakerUsed && (
-                              <span className="flex items-center bg-gradient-to-r from-google-blue/10 to-google-red/10 px-2 py-1 rounded-full">
+                              <span className="flex items-center bg-gradient-to-r from-purple-100 to-pink-100 px-2 py-1 rounded-full">
                                 {room.tiebreakerUsed === 'dice' && '🎲'}
                                 {room.tiebreakerUsed === 'coin' && '🪙'}
                                 {room.tiebreakerUsed === 'spinner' && '🎡'}

@@ -72,14 +72,14 @@ const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
             <Button
               variant="ghost"
               onClick={() => onNavigate("dashboard")}
-              className="self-start mb-2 text-google-blue hover:text-google-blue/80"
+              className="self-start mb-2 text-purple-600 hover:text-purple-700"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <div className="text-center">
               <div className="text-4xl mb-2">🚪</div>
-              <CardTitle className="text-2xl font-bold text-google-blue">
+              <CardTitle className="text-2xl font-bold text-purple-600">
                 Join Room
               </CardTitle>
               <CardDescription className="text-lg">
@@ -108,7 +108,7 @@ const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
               <Button
                 type="submit"
                 disabled={roomCode.length !== 6}
-                className="w-full bg-gradient-to-r from-google-blue to-google-red hover:from-google-blue/90 hover:to-google-red/90 text-white font-bold text-lg h-12 rounded-full"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
                 Join Room 🎯
               </Button>

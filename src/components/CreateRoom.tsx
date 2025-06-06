@@ -87,7 +87,7 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
           <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
             <CardHeader className="text-center">
               <div className="text-6xl mb-4">🎉</div>
-              <CardTitle className="text-3xl font-bold text-google-green">
+              <CardTitle className="text-3xl font-bold text-green-600">
                 Room Created!
               </CardTitle>
               <CardDescription className="text-lg">
@@ -99,7 +99,7 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
                 <Label className="text-lg font-semibold text-gray-700">Room Code</Label>
                 <div className="flex items-center space-x-2 mt-2">
                   <div className="flex-1 text-center">
-                    <div className="text-4xl font-bold bg-gradient-to-r from-google-blue to-google-red bg-clip-text text-transparent tracking-wider">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent tracking-wider">
                       {createdRoom.code}
                     </div>
                   </div>
@@ -127,7 +127,7 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
 
               <Button
                 onClick={handleJoinRoom}
-                className="w-full bg-gradient-to-r from-google-green to-google-blue hover:from-google-green/90 hover:to-google-blue/90 text-white font-bold text-lg h-12 rounded-full"
+                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-lg h-12 rounded-full"
               >
                 Enter Room 🚪
               </Button>
@@ -150,14 +150,14 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
             <Button
               variant="ghost"
               onClick={() => onNavigate("dashboard")}
-              className="self-start mb-2 text-google-blue hover:text-google-blue/80"
+              className="self-start mb-2 text-purple-600 hover:text-purple-700"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <div className="text-center">
               <div className="text-4xl mb-2">🎲</div>
-              <CardTitle className="text-2xl font-bold text-google-blue">
+              <CardTitle className="text-2xl font-bold text-purple-600">
                 Create New Room
               </CardTitle>
               <CardDescription className="text-lg">
@@ -215,7 +215,7 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
               <Button
                 type="submit"
                 disabled={!title.trim()}
-                className="w-full bg-gradient-to-r from-google-blue to-google-red hover:from-google-blue/90 hover:to-google-red/90 text-white font-bold text-lg h-12 rounded-full"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
                 Create Room 🚀
               </Button>

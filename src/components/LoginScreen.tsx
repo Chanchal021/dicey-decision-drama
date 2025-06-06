@@ -57,7 +57,7 @@ const LoginScreen = ({ onLogin, onNavigate }: LoginScreenProps) => {
               <motion.span variants={emojiVariants} animate="animate" style={{ animationDelay: "0.3s" }} className="text-4xl">🪙</motion.span>
               <motion.span variants={emojiVariants} animate="animate" style={{ animationDelay: "0.6s" }} className="text-4xl">🎡</motion.span>
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-google-blue to-google-red bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               DiceyDecisions
             </CardTitle>
             <CardDescription className="text-lg">
@@ -102,7 +102,7 @@ const LoginScreen = ({ onLogin, onNavigate }: LoginScreenProps) => {
             <CardFooter className="flex flex-col space-y-3">
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-google-blue to-google-green hover:from-google-blue/90 hover:to-google-green/90 text-white font-bold text-lg h-12 rounded-full"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
                 {isSignup ? "Sign Up & Start Playing! 🚀" : "Login & Let's Decide! ✨"}
               </Button>
@@ -110,7 +110,7 @@ const LoginScreen = ({ onLogin, onNavigate }: LoginScreenProps) => {
                 type="button"
                 variant="ghost"
                 onClick={() => setIsSignup(!isSignup)}
-                className="text-google-blue hover:text-google-blue/80"
+                className="text-purple-600 hover:text-purple-700"
               >
                 {isSignup ? "Already have an account? Login" : "New here? Create account"}
               </Button>
