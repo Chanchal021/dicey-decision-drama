@@ -19,8 +19,9 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room');
-    if (roomCode) {
-      setInitialRoomCode(roomCode);
+    if (roomCode && roomCode.trim()) {
+      console.log('Found room code in URL:', roomCode);
+      setInitialRoomCode(roomCode.trim().toUpperCase());
       // Clear the URL parameter for cleaner URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -29,14 +30,18 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
   // Handle navigation based on user login status and room code
   useEffect(() => {
     if (initialRoomCode) {
+      console.log('Processing initial room code:', initialRoomCode, 'User:', !!user, 'Auth loading:', authLoading);
+      
       if (user) {
         // User is logged in and we have a room code
         if (currentScreen === "landing" || currentScreen === "login") {
+          console.log('Navigating to join-room screen');
           setCurrentScreen("join-room");
         }
       } else if (!authLoading) {
         // User is not logged in and we have a room code
         if (currentScreen === "landing") {
+          console.log('User not logged in, navigating to login');
           setCurrentScreen("login");
         }
       }

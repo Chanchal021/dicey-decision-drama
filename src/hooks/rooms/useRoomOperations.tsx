@@ -6,79 +6,64 @@ import { CreateRoomData, Room } from './types';
 export const useRoomOperations = (userId?: string, refetchRooms?: () => void) => {
   const { toast } = useToast();
 
-  const createRoom = async (roomData: CreateRoomData) => {
+  const createRoom = async (roomData: CreateRoomData): Promise<Room | null> => {
     if (!userId) {
       toast({
         title: "Authentication required",
-        description: "Please log in to create a room",
+        description: "You must be logged in to create a room",
         variant: "destructive"
       });
       return null;
     }
 
     try {
-      console.log('Creating room with data:', roomData);
-      
-      // Generate room code
-      const { data: codeData, error: codeError } = await supabase
-        .rpc('generate_room_code');
-
-      if (codeError) {
-        console.error('Error generating room code:', codeError);
-        throw codeError;
-      }
-
-      console.log('Generated room code:', codeData);
-
-      // Create room
+      // Create the room
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .insert({
           title: roomData.title,
           description: roomData.description,
-          code: codeData,
-          max_participants: roomData.maxParticipants,
-          creator_id: userId
+          creator_id: userId,
+          max_participants: roomData.maxParticipants
         })
         .select()
         .single();
 
       if (roomError) {
         console.error('Error creating room:', roomError);
-        throw roomError;
+        toast({
+          title: "Failed to create room",
+          description: roomError.message,
+          variant: "destructive"
+        });
+        return null;
       }
 
-      console.log('Room created successfully:', room);
-
-      // Get user profile for display name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', userId)
-        .single();
-
-      console.log('User profile:', profile);
-
-      // Add creator as participant
+      // Add creator as first participant
       const { error: participantError } = await supabase
         .from('room_participants')
         .insert({
           room_id: room.id,
           user_id: userId,
-          display_name: profile?.display_name || 'You'
+          display_name: roomData.title // Use room title as creator's display name for now
         });
 
       if (participantError) {
         console.error('Error adding creator as participant:', participantError);
-        // Don't throw here - room is still created successfully
+        // Don't fail completely, just warn
+        toast({
+          title: "Warning",
+          description: "Room created but failed to add you as participant",
+          variant: "destructive"
+        });
       }
 
-      // Create options for the room
+      // Add options to the room
       if (roomData.options && roomData.options.length > 0) {
         const optionsToInsert = roomData.options.map(option => ({
           room_id: room.id,
-          submitted_by: userId,
-          text: option
+          text: option,
+          submitted_by: userId
         }));
 
         const { error: optionsError } = await supabase
@@ -86,182 +71,198 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           .insert(optionsToInsert);
 
         if (optionsError) {
-          console.error('Error creating options:', optionsError);
-          // Don't throw here - room is still created successfully
+          console.error('Error adding options:', optionsError);
+          toast({
+            title: "Warning",
+            description: "Room created but some options failed to save",
+            variant: "destructive"
+          });
         }
       }
 
       toast({
-        title: "Room created! 🎉",
-        description: `Room code: ${room.code}`,
+        title: "Room created successfully!",
+        description: `Room "${roomData.title}" is ready for participants`,
       });
 
       if (refetchRooms) {
-        await refetchRooms();
+        refetchRooms();
       }
+
       return room;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating room:', error);
       toast({
         title: "Failed to create room",
-        description: error.message || 'An unexpected error occurred',
+        description: "An unexpected error occurred",
         variant: "destructive"
       });
       return null;
     }
   };
 
-  const joinRoom = async (roomCode: string, displayName: string) => {
-    console.log('Join room called with:', { roomCode, displayName, userId });
-    
+  const joinRoom = async (roomCode: string, displayName: string): Promise<Room | null> => {
     if (!userId) {
-      console.error('No userId provided for room joining');
       toast({
         title: "Authentication required",
-        description: "Please log in to join a room",
+        description: "You must be logged in to join a room",
         variant: "destructive"
       });
       return null;
     }
 
-    // Check current auth session
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('Current auth session:', session?.user?.id);
-
-    if (!session) {
-      console.error('No active session found');
+    if (!roomCode?.trim()) {
       toast({
-        title: "Session expired",
-        description: "Please log in again to join a room",
+        title: "Invalid room code",
+        description: "Please enter a valid room code",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    if (!displayName?.trim()) {
+      toast({
+        title: "Display name required",
+        description: "Please enter your display name",
         variant: "destructive"
       });
       return null;
     }
 
     try {
-      console.log('Joining room with code:', roomCode);
-      
-      // Find room by code with exact match and ensure it's open
-      const { data: roomData, error: roomError } = await supabase
+      console.log('Attempting to join room with code:', roomCode);
+
+      // First, find the room by code
+      const { data: room, error: roomError } = await supabase
         .from('rooms')
-        .select('*')
-        .eq('code', roomCode.toUpperCase())
+        .select(`
+          *,
+          room_participants (
+            id,
+            user_id,
+            display_name,
+            joined_at
+          ),
+          options!options_room_id_fkey (
+            id,
+            text,
+            submitted_by,
+            created_at
+          ),
+          votes (
+            id,
+            user_id,
+            option_id,
+            created_at
+          )
+        `)
+        .eq('code', roomCode.toUpperCase().trim())
         .eq('is_open', true)
-        .maybeSingle();
+        .single();
 
       if (roomError) {
-        console.error('Error searching for room:', roomError);
-        throw roomError;
-      }
-
-      let room = roomData;
-
-      if (!room) {
-        console.error('Room not found with code:', roomCode);
+        console.error('Error finding room:', roomError);
         
-        // Also try a case-insensitive search as fallback
-        const { data: fallbackRoom, error: fallbackError } = await supabase
-          .from('rooms')
-          .select('*')
-          .ilike('code', roomCode)
-          .eq('is_open', true)
-          .maybeSingle();
-
-        if (fallbackError) {
-          console.error('Error in fallback search:', fallbackError);
-        }
-
-        if (!fallbackRoom) {
+        if (roomError.code === 'PGRST116') {
           toast({
-            title: "Room not found 😕",
-            description: `No active room found with code "${roomCode}". Please check the code and try again.`,
+            title: "Room not found",
+            description: "No room exists with that code, or the room may be closed",
             variant: "destructive"
           });
-          return null;
+        } else {
+          toast({
+            title: "Error joining room",
+            description: roomError.message,
+            variant: "destructive"
+          });
         }
-        
-        // Use the fallback room if found
-        console.log('Found room via fallback search:', fallbackRoom);
-        room = fallbackRoom;
+        return null;
       }
 
-      console.log('Found room:', room);
-
-      // Check if room is full
-      const { data: participants, error: participantsError } = await supabase
-        .from('room_participants')
-        .select('id')
-        .eq('room_id', room.id);
-
-      if (participantsError) {
-        console.error('Error fetching participants:', participantsError);
-        throw participantsError;
-      }
-
-      console.log('Current participants:', participants);
-
-      if (room.max_participants && participants.length >= room.max_participants) {
+      if (!room) {
         toast({
-          title: "Room is full 🚪",
-          description: "This room has reached its participant limit",
+          title: "Room not found",
+          description: "No room exists with that code, or the room may be closed",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Check if room is at capacity
+      const currentParticipants = room.room_participants?.length || 0;
+      if (room.max_participants && currentParticipants >= room.max_participants) {
+        toast({
+          title: "Room is full",
+          description: `This room has reached its maximum capacity of ${room.max_participants} participants`,
           variant: "destructive"
         });
         return null;
       }
 
       // Check if user is already in the room
-      const { data: existingParticipant } = await supabase
+      const isAlreadyParticipant = room.room_participants?.some(
+        (participant: any) => participant.user_id === userId
+      );
+
+      if (isAlreadyParticipant) {
+        toast({
+          title: "Already in room",
+          description: "You're already a participant in this room",
+        });
+        
+        // Format the room properly and return it
+        const formattedRoom = {
+          ...room,
+          room_participants: Array.isArray(room.room_participants) ? room.room_participants : [],
+          options: Array.isArray(room.options) ? room.options : [],
+          votes: Array.isArray(room.votes) ? room.votes : []
+        } as Room;
+
+        return formattedRoom;
+      }
+
+      // Add user to room
+      const { error: joinError } = await supabase
         .from('room_participants')
-        .select('id')
-        .eq('room_id', room.id)
-        .eq('user_id', userId)
-        .maybeSingle();
+        .insert({
+          room_id: room.id,
+          user_id: userId,
+          display_name: displayName.trim()
+        });
 
-      if (!existingParticipant) {
-        console.log('Adding user as participant');
-        // Add user as participant
-        const { error: joinError } = await supabase
-          .from('room_participants')
-          .insert({
-            room_id: room.id,
-            user_id: userId,
-            display_name: displayName
-          });
-
-        if (joinError) {
-          console.error('Error joining room:', joinError);
-          throw joinError;
-        }
-        console.log('Successfully added user as participant');
-      } else {
-        console.log('User already in room, updating display name');
-        // Update display name if user is already in room
-        const { error: updateError } = await supabase
-          .from('room_participants')
-          .update({ display_name: displayName })
-          .eq('room_id', room.id)
-          .eq('user_id', userId);
-
-        if (updateError) {
-          console.error('Error updating participant:', updateError);
-          // Don't throw here - user can still join
-        }
+      if (joinError) {
+        console.error('Error joining room:', joinError);
+        toast({
+          title: "Failed to join room",
+          description: joinError.message,
+          variant: "destructive"
+        });
+        return null;
       }
 
       toast({
-        title: "Joined successfully! 🎉",
-        description: `Welcome to ${room.title}`,
+        title: "Successfully joined room!",
+        description: `Welcome to "${room.title}"`,
       });
 
       if (refetchRooms) {
-        await refetchRooms();
+        refetchRooms();
       }
-      return room;
-    } catch (error: any) {
+
+      // Format the room properly and return it
+      const formattedRoom = {
+        ...room,
+        room_participants: Array.isArray(room.room_participants) ? room.room_participants : [],
+        options: Array.isArray(room.options) ? room.options : [],
+        votes: Array.isArray(room.votes) ? room.votes : []
+      } as Room;
+
+      return formattedRoom;
+    } catch (error) {
       console.error('Error joining room:', error);
       toast({
         title: "Failed to join room",
-        description: error.message || 'An unexpected error occurred',
+        description: "An unexpected error occurred while joining the room",
         variant: "destructive"
       });
       return null;

@@ -65,11 +65,19 @@ const JoinRoom = ({ initialRoomCode, onRoomJoined, onNavigate }: JoinRoomProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roomCode.trim() || !displayName.trim()) return;
+    const trimmedCode = roomCode.trim().toUpperCase();
+    const trimmedName = displayName.trim();
+    
+    if (!trimmedCode || !trimmedName) {
+      return;
+    }
     
     setIsLoading(true);
     try {
-      await onRoomJoined(roomCode.trim(), displayName.trim());
+      console.log('Submitting join room request:', { roomCode: trimmedCode, displayName: trimmedName });
+      await onRoomJoined(trimmedCode, trimmedName);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +115,11 @@ const JoinRoom = ({ initialRoomCode, onRoomJoined, onNavigate }: JoinRoomProps) 
             <p className="text-gray-600 mt-2">
               Enter the room code to join the decision session! 🎉
             </p>
+            {initialRoomCode && (
+              <p className="text-sm text-purple-600 mt-2">
+                Room code from link: {initialRoomCode}
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -118,9 +131,10 @@ const JoinRoom = ({ initialRoomCode, onRoomJoined, onNavigate }: JoinRoomProps) 
                   id="roomCode"
                   type="text"
                   value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value)}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   placeholder="Enter room code"
                   className="text-center text-lg font-mono uppercase tracking-widest"
+                  maxLength={10}
                   required
                 />
               </div>
@@ -135,6 +149,7 @@ const JoinRoom = ({ initialRoomCode, onRoomJoined, onNavigate }: JoinRoomProps) 
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="How should others see you?"
+                  maxLength={50}
                   required
                 />
               </div>
