@@ -196,7 +196,7 @@ export const useRooms = (userId?: string) => {
     }
 
     try {
-      // Find room by code
+      // Find room by code - specify the table name to avoid ambiguity
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')
