@@ -23,6 +23,7 @@ const Index = () => {
 
   const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) : null;
 
+  // All useEffect hooks must be called in the same order every time
   // Check for room code in URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,23 +32,25 @@ const Index = () => {
       setInitialRoomCode(roomCode);
       // Clear the URL parameter for cleaner URL
       window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // If user is logged in, go directly to join room
+    }
+  }, []); // Only run once on mount
+
+  // Handle navigation based on user login status and room code
+  useEffect(() => {
+    if (initialRoomCode) {
       if (user) {
-        setCurrentScreen("join-room");
-      } else {
-        // If not logged in, go to login first
-        setCurrentScreen("login");
+        // User is logged in and we have a room code
+        if (currentScreen === "landing" || currentScreen === "login") {
+          setCurrentScreen("join-room");
+        }
+      } else if (!authLoading) {
+        // User is not logged in and we have a room code
+        if (currentScreen === "landing") {
+          setCurrentScreen("login");
+        }
       }
     }
-  }, [user]);
-
-  // Auto-navigate to join room after login if there was a room code
-  useEffect(() => {
-    if (user && initialRoomCode && currentScreen === "login") {
-      setCurrentScreen("join-room");
-    }
-  }, [user, initialRoomCode, currentScreen]);
+  }, [user, initialRoomCode, currentScreen, authLoading]);
 
   const screenVariants = {
     initial: { opacity: 0, y: 20 },
@@ -92,6 +95,7 @@ const Index = () => {
         />;
       case "join-room":
         return <JoinRoom 
+          initialRoomCode={initialRoomCode}
           onRoomJoined={async (roomCode, displayName) => {
             // Use initial room code if available, otherwise use the entered code
             const codeToUse = initialRoomCode || roomCode;
@@ -139,13 +143,6 @@ const Index = () => {
         return <LandingPage onNavigate={setCurrentScreen} />;
     }
   };
-
-  // Pre-fill room code if we have one
-  useEffect(() => {
-    if (initialRoomCode && currentScreen === "join-room") {
-      // We'll handle this in the JoinRoom component by passing the code
-    }
-  }, [initialRoomCode, currentScreen]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400">
