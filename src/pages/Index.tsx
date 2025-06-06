@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useRooms } from "@/hooks/useRooms";
@@ -17,10 +17,37 @@ import { Screen } from "@/types";
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>("landing");
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+  const [initialRoomCode, setInitialRoomCode] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const { rooms, loading: roomsLoading, createRoom, joinRoom } = useRooms(user?.id);
 
   const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) : null;
+
+  // Check for room code in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('room');
+    if (roomCode) {
+      setInitialRoomCode(roomCode);
+      // Clear the URL parameter for cleaner URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // If user is logged in, go directly to join room
+      if (user) {
+        setCurrentScreen("join-room");
+      } else {
+        // If not logged in, go to login first
+        setCurrentScreen("login");
+      }
+    }
+  }, [user]);
+
+  // Auto-navigate to join room after login if there was a room code
+  useEffect(() => {
+    if (user && initialRoomCode && currentScreen === "login") {
+      setCurrentScreen("join-room");
+    }
+  }, [user, initialRoomCode, currentScreen]);
 
   const screenVariants = {
     initial: { opacity: 0, y: 20 },
@@ -66,10 +93,13 @@ const Index = () => {
       case "join-room":
         return <JoinRoom 
           onRoomJoined={async (roomCode, displayName) => {
-            const room = await joinRoom(roomCode, displayName);
+            // Use initial room code if available, otherwise use the entered code
+            const codeToUse = initialRoomCode || roomCode;
+            const room = await joinRoom(codeToUse, displayName);
             if (room) {
               setCurrentRoomId(room.id);
               setCurrentScreen("room-lobby");
+              setInitialRoomCode(null); // Clear the initial room code
             }
           }} 
           onNavigate={setCurrentScreen} 
@@ -109,6 +139,13 @@ const Index = () => {
         return <LandingPage onNavigate={setCurrentScreen} />;
     }
   };
+
+  // Pre-fill room code if we have one
+  useEffect(() => {
+    if (initialRoomCode && currentScreen === "join-room") {
+      // We'll handle this in the JoinRoom component by passing the code
+    }
+  }, [initialRoomCode, currentScreen]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400">

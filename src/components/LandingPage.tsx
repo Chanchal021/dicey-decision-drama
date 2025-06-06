@@ -1,9 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Screen } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { LogOut, User } from "lucide-react";
 
 interface LandingPageProps {
   onNavigate: (screen: Screen) => void;
@@ -13,6 +14,7 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const { scrollY } = useScroll();
+  const { user, signOut } = useAuth();
   
   const parallaxY = useTransform(scrollY, [0, 1000], [0, -200]);
   const opacityRange = useTransform(scrollY, [0, 300], [1, 0.3]);
@@ -104,8 +106,47 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
     { number: "0", label: "Arguments Started", icon: "☮️" }
   ];
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Authentication Status Bar */}
+      {user && (
+        <motion.div 
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed top-4 right-4 z-50 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20"
+        >
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 text-white">
+              <User className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {user.user_metadata?.display_name || user.email?.split('@')[0] || 'User'}
+              </span>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                size="sm"
+                onClick={() => onNavigate("dashboard")}
+                className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1 h-7"
+              >
+                Dashboard
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleSignOut}
+                className="text-white hover:bg-white/20 text-xs px-2 py-1 h-7"
+              >
+                <LogOut className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,.1)_50%,transparent_75%,transparent_100%)] bg-[length:60px_60px] animate-pulse"></div>
@@ -186,20 +227,41 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
             className="flex flex-col sm:flex-row gap-6 justify-center items-center"
             variants={itemVariants}
           >
-            <Button 
-              onClick={() => onNavigate("login")}
-              className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden"
-            >
-              <span className="relative z-10">Start Rolling 🚀</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Button>
-            <Button 
-              onClick={() => onNavigate("join-room")}
-              variant="outline"
-              className="group border-4 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 bg-transparent backdrop-blur-sm"
-            >
-              Join The Fun 🎯
-            </Button>
+            {user ? (
+              <>
+                <Button 
+                  onClick={() => onNavigate("dashboard")}
+                  className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden"
+                >
+                  <span className="relative z-10">Go to Dashboard 🚀</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Button>
+                <Button 
+                  onClick={() => onNavigate("join-room")}
+                  variant="outline"
+                  className="group border-4 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 bg-transparent backdrop-blur-sm"
+                >
+                  Join Room 🎯
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  onClick={() => onNavigate("login")}
+                  className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden"
+                >
+                  <span className="relative z-10">Start Rolling 🚀</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Button>
+                <Button 
+                  onClick={() => onNavigate("login")}
+                  variant="outline"
+                  className="group border-4 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 bg-transparent backdrop-blur-sm"
+                >
+                  Join The Fun 🎯
+                </Button>
+              </>
+            )}
           </motion.div>
 
           {/* Stats */}
@@ -316,11 +378,11 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
             transition={{ delay: 0.4, type: "spring", damping: 20 }}
           >
             <Button 
-              onClick={() => onNavigate("login")}
+              onClick={() => user ? onNavigate("dashboard") : onNavigate("login")}
               className="group relative bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:via-purple-400 hover:to-pink-400 text-white font-black text-2xl px-16 py-8 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden"
             >
               <span className="relative z-10 flex items-center gap-3">
-                Let's Go! 🎉
+                {user ? "Go to Dashboard! 🎉" : "Let's Go! 🎉"}
                 <motion.span
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}

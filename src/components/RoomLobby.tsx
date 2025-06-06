@@ -30,7 +30,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
         animate={{ opacity: 1, y: 0 }}
         className="max-w-2xl mx-auto"
       >
-        <RoomHeader room={room} />
+        <RoomHeader room={room} onNavigate={onNavigate} />
         <ParticipantsList room={room} user={user} />
         <DecisionOptions room={room} user={user} />
         <VotingStatus room={room} user={user} onNavigate={onNavigate} />
