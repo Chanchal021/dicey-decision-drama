@@ -1,6 +1,6 @@
 
 // Re-export the Room interface from the main types file
-export { Room } from '@/types';
+export type { Room } from '@/types';
 
 export interface CreateRoomData {
   title: string;

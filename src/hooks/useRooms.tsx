@@ -3,7 +3,7 @@ import { useRoomData } from './rooms/useRoomData';
 import { useRoomOperations } from './rooms/useRoomOperations';
 import { useRoomRealtime } from './rooms/useRoomRealtime';
 
-export { Room } from './rooms/types';
+export type { Room } from './rooms/types';
 
 export const useRooms = (userId?: string) => {
   const { rooms, loading, fetchRooms } = useRoomData(userId);
