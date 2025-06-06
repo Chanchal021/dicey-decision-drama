@@ -17,13 +17,18 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
+      console.log('Creating room with data:', roomData);
+      
       // Generate room code
       const { data: codeData, error: codeError } = await supabase
         .rpc('generate_room_code');
 
       if (codeError) {
+        console.error('Error generating room code:', codeError);
         throw codeError;
       }
+
+      console.log('Generated room code:', codeData);
 
       // Create room
       const { data: room, error: roomError } = await supabase
@@ -40,8 +45,11 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .single();
 
       if (roomError) {
+        console.error('Error creating room:', roomError);
         throw roomError;
       }
+
+      console.log('Room created successfully:', room);
 
       // Get user profile for display name
       const { data: profile } = await supabase
@@ -49,6 +57,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .select('display_name')
         .eq('id', userId)
         .single();
+
+      console.log('User profile:', profile);
 
       // Add creator as participant
       const { error: participantError } = await supabase
@@ -76,7 +86,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       console.error('Error creating room:', error);
       toast({
         title: "Failed to create room",
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: "destructive"
       });
       return null;
@@ -94,7 +104,9 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
-      // Find room by code - explicitly specify the table alias to avoid ambiguity
+      console.log('Joining room with code:', roomCode);
+      
+      // Find room by code - use table alias to avoid ambiguity
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')
@@ -102,6 +114,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .single();
 
       if (roomError || !room) {
+        console.error('Room not found:', roomError);
         toast({
           title: "Room not found 😕",
           description: `No room found with code "${roomCode}"`,
@@ -110,6 +123,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         return null;
       }
 
+      console.log('Found room:', room);
+
       // Check if room is full
       const { data: participants, error: participantsError } = await supabase
         .from('participants')
@@ -117,8 +132,11 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .eq('room_id', room.id);
 
       if (participantsError) {
+        console.error('Error fetching participants:', participantsError);
         throw participantsError;
       }
+
+      console.log('Current participants:', participants);
 
       if (room.max_participants && participants.length >= room.max_participants) {
         toast({
@@ -138,6 +156,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .single();
 
       if (!existingParticipant) {
+        console.log('Adding user as participant');
         // Add user as participant
         const { error: joinError } = await supabase
           .from('participants')
@@ -148,8 +167,11 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           });
 
         if (joinError) {
+          console.error('Error joining room:', joinError);
           throw joinError;
         }
+      } else {
+        console.log('User already in room');
       }
 
       toast({
@@ -165,7 +187,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       console.error('Error joining room:', error);
       toast({
         title: "Failed to join room",
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: "destructive"
       });
       return null;
