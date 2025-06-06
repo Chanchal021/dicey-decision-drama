@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 220 98% 61%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -32,25 +33,24 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 220 98% 61%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Google Color Palette */
+    --google-blue: 220 98% 61%; /* #4285F4 */
+    --google-red: 4 84% 56%; /* #EA4335 */
+    --google-yellow: 42 100% 48%; /* #F4B400 */
+    --google-green: 142 52% 43%; /* #34A853 */
   }
 
   .dark {
@@ -63,7 +63,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 220 98% 61%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -80,15 +80,21 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 220 98% 61%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 220 98% 61%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 220 98% 61%;
+
+    /* Google Color Palette */
+    --google-blue: 220 98% 61%;
+    --google-red: 4 84% 56%;
+    --google-yellow: 42 100% 48%;
+    --google-green: 142 52% 43%;
   }
 }
 
@@ -99,5 +105,44 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-google-blue {
+    background-color: hsl(var(--google-blue));
+  }
+  .bg-google-red {
+    background-color: hsl(var(--google-red));
+  }
+  .bg-google-yellow {
+    background-color: hsl(var(--google-yellow));
+  }
+  .bg-google-green {
+    background-color: hsl(var(--google-green));
+  }
+  .text-google-blue {
+    color: hsl(var(--google-blue));
+  }
+  .text-google-red {
+    color: hsl(var(--google-red));
+  }
+  .text-google-yellow {
+    color: hsl(var(--google-yellow));
+  }
+  .text-google-green {
+    color: hsl(var(--google-green));
+  }
+  .border-google-blue {
+    border-color: hsl(var(--google-blue));
+  }
+  .border-google-red {
+    border-color: hsl(var(--google-red));
+  }
+  .border-google-yellow {
+    border-color: hsl(var(--google-yellow));
+  }
+  .border-google-green {
+    border-color: hsl(var(--google-green));
   }
 }

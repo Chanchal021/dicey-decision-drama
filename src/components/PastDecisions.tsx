@@ -84,7 +84,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
             <CardContent className="text-center py-6">
               <div className="text-3xl mb-2">🏆</div>
-              <div className="text-2xl font-bold text-purple-600">{userRooms.length}</div>
+              <div className="text-2xl font-bold text-google-blue">{userRooms.length}</div>
               <div className="text-gray-600">Decisions Made</div>
             </CardContent>
           </Card>
@@ -92,7 +92,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
             <CardContent className="text-center py-6">
               <div className="text-3xl mb-2">🎭</div>
-              <div className="text-2xl font-bold text-pink-600">
+              <div className="text-2xl font-bold text-google-red">
                 {userRooms.filter(room => room.tiebreakerUsed).length}
               </div>
               <div className="text-gray-600">Tiebreakers Used</div>
@@ -102,7 +102,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
             <CardContent className="text-center py-6">
               <div className="text-3xl mb-2">👥</div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-google-green">
                 {Math.round(userRooms.reduce((sum, room) => sum + room.participants.length, 0) / userRooms.length || 0)}
               </div>
               <div className="text-gray-600">Avg Group Size</div>
@@ -122,7 +122,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                 </p>
                 <Button
                   onClick={() => onNavigate("dashboard")}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg px-6 py-3 rounded-full"
+                  className="bg-gradient-to-r from-google-blue to-google-red hover:from-google-blue/90 hover:to-google-red/90 text-white font-bold text-lg px-6 py-3 rounded-full"
                 >
                   Make Your First Decision! 🚀
                 </Button>
@@ -160,9 +160,9 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                       <div className="space-y-3">
                         {/* Winner */}
                         <div className="flex items-center space-x-2">
-                          <Trophy className="w-5 h-5 text-yellow-500" />
+                          <Trophy className="w-5 h-5 text-google-yellow" />
                           <span className="font-semibold text-gray-700">Winner:</span>
-                          <span className="font-bold text-purple-600 text-lg">
+                          <span className="font-bold text-google-blue text-lg">
                             {room.finalChoice}
                           </span>
                         </div>
@@ -180,14 +180,14 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                           </div>
 
                           {room.tiebreakerUsed && (
-                            <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200">
+                            <Badge className="bg-gradient-to-r from-google-blue/10 to-google-red/10 text-google-blue border-google-blue/20">
                               <span className="mr-1">{getTiebreakerEmoji(room.tiebreakerUsed)}</span>
                               Tiebreaker: {room.tiebreakerUsed}
                             </Badge>
                           )}
 
                           {room.creator === user.id && (
-                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                            <Badge variant="secondary" className="bg-google-yellow/20 text-google-yellow">
                               <span className="mr-1">👑</span>
                               Creator
                             </Badge>

@@ -92,7 +92,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
               >
                 🗳️
               </motion.div>
-              <h2 className="text-3xl font-bold text-green-600 mb-2">
+              <h2 className="text-3xl font-bold text-google-green mb-2">
                 Vote Submitted!
               </h2>
               <p className="text-lg text-gray-600 mb-4">
@@ -119,7 +119,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
         <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0 mb-6">
           <CardHeader className="text-center">
             <div className="text-4xl mb-2">🗳️</div>
-            <CardTitle className="text-3xl font-bold text-purple-600 mb-2">
+            <CardTitle className="text-3xl font-bold text-google-blue mb-2">
               Time to Vote!
             </CardTitle>
             <p className="text-xl text-gray-600 mb-4">{room.title}</p>
@@ -155,15 +155,15 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
               <Card className={`
                 transition-all duration-300 border-2
                 ${selectedOption === option 
-                  ? 'border-purple-500 bg-purple-50/90 shadow-lg' 
-                  : 'border-gray-200 bg-white/90 hover:border-purple-300 hover:shadow-lg'
+                  ? 'border-google-blue bg-google-blue/10 shadow-lg' 
+                  : 'border-gray-200 bg-white/90 hover:border-google-blue/50 hover:shadow-lg'
                 }
                 ${userHasVoted ? 'opacity-50 cursor-not-allowed' : ''}
               `}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">
+                      <div className="text-2xl font-bold text-google-blue mb-1">
                         Option {index + 1}
                       </div>
                       <div className="text-lg text-gray-800">
@@ -174,7 +174,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center"
+                        className="w-8 h-8 bg-google-blue rounded-full flex items-center justify-center"
                       >
                         <Check className="w-5 h-5 text-white" />
                       </motion.div>
@@ -195,7 +195,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
           >
             <Button
               onClick={handleSubmitVote}
-              className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-xl px-8 py-4 rounded-full"
+              className="bg-gradient-to-r from-google-green to-google-blue hover:from-google-green/90 hover:to-google-blue/90 text-white font-bold text-xl px-8 py-4 rounded-full"
             >
               Submit Vote ✅
             </Button>

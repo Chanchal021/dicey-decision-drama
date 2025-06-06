@@ -92,7 +92,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400">
+    <div className="min-h-screen bg-gradient-to-br from-google-blue via-google-red to-google-yellow">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentScreen}
