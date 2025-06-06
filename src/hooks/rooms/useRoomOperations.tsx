@@ -106,7 +106,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     try {
       console.log('Joining room with code:', roomCode);
       
-      // Find room by code - use table alias to avoid ambiguity
+      // Find room by code - explicitly specify table alias to avoid ambiguity
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')

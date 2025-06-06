@@ -157,6 +157,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      user_can_access_room: {
+        Args: { room_id: string; user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       tiebreaker_method: "dice" | "spinner" | "coin"
