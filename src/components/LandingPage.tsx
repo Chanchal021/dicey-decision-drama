@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+
+import { useState, useEffect } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Screen } from "@/types";
@@ -10,270 +11,263 @@ interface LandingPageProps {
 
 const LandingPage = ({ onNavigate }: LandingPageProps) => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const { scrollY } = useScroll();
+  
+  const parallaxY = useTransform(scrollY, [0, 1000], [0, -200]);
+  const opacityRange = useTransform(scrollY, [0, 300], [1, 0.3]);
 
-  const floatingAnimation = {
-    y: [0, -10, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  };
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
-  const staggerChildren = {
-    animate: {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.1,
+        delayChildren: 0.2
       }
     }
   };
 
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
+  const itemVariants = {
+    hidden: { y: 50, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100
+      }
+    }
   };
+
+  const floatingElements = [
+    { emoji: "🎲", delay: 0, duration: 4 },
+    { emoji: "🎡", delay: 1, duration: 5 },
+    { emoji: "🪙", delay: 2, duration: 3.5 },
+    { emoji: "🎯", delay: 0.5, duration: 4.5 },
+    { emoji: "⚡", delay: 1.5, duration: 3 },
+    { emoji: "🎊", delay: 2.5, duration: 4.2 }
+  ];
 
   const features = [
     {
-      icon: "🤫",
-      title: "Anonymous Voting",
-      description: "Vote without bias - no one knows who chose what until results are revealed!"
+      icon: "🎭",
+      title: "Anonymous Voting Magic",
+      description: "Cast your vote in complete secrecy - no bias, no pressure, just pure democracy at work.",
+      gradient: "from-purple-500 to-pink-500"
     },
     {
       icon: "⚡",
-      title: "Real-Time Results",
-      description: "Watch votes come in live and see the excitement build as decisions unfold."
+      title: "Lightning-Fast Results",
+      description: "Watch decisions unfold in real-time with stunning visual feedback and instant updates.",
+      gradient: "from-blue-500 to-cyan-500"
     },
     {
       icon: "🎲",
-      title: "Epic Tiebreakers",
-      description: "When votes are tied, let the dice, spinner, or coin flip decide your fate!"
+      title: "Epic Tiebreaker Shows",
+      description: "Transform deadlocks into thrilling moments with our spectacular dice, wheels, and coin flips.",
+      gradient: "from-green-500 to-emerald-500"
     },
     {
-      icon: "🎬",
-      title: "Fun Animations",
-      description: "Every reveal is a mini celebration with delightful animations and surprises."
+      icon: "🎨",
+      title: "Gorgeous Animations",
+      description: "Every interaction is a visual delight with smooth transitions and delightful micro-interactions.",
+      gradient: "from-orange-500 to-red-500"
     },
     {
-      icon: "📊",
-      title: "Decision History",
-      description: "Track all your past group decisions and see what tiebreakers saved the day."
+      icon: "📈",
+      title: "Smart Analytics",
+      description: "Track your group's decision patterns and see which tiebreakers save the day most often.",
+      gradient: "from-indigo-500 to-purple-500"
     },
     {
-      icon: "📱",
-      title: "Mobile Friendly",
-      description: "Make decisions on the go - works perfectly on any device, anywhere."
+      icon: "🌍",
+      title: "Global Accessibility",
+      description: "Perfect on any device, anywhere in the world - your decisions travel with you.",
+      gradient: "from-pink-500 to-rose-500"
     }
   ];
 
-  const testimonials = [
-    {
-      text: "Deciding dinner has never been this fun! 🍕",
-      author: "Sarah, 24",
-      avatar: "👩‍🦱"
-    },
-    {
-      text: "Finally solved our movie night debates 🎬",
-      author: "Jake, 28", 
-      avatar: "👨‍💼"
-    },
-    {
-      text: "The dice roll for vacation destination was EPIC! ✈️",
-      author: "Maya, 22",
-      avatar: "👩‍🎓"
-    }
+  const stats = [
+    { number: "10K+", label: "Decisions Made", icon: "✅" },
+    { number: "50+", label: "Countries", icon: "🌎" },
+    { number: "99.9%", label: "Fun Guaranteed", icon: "🎉" },
+    { number: "0", label: "Arguments Started", icon: "☮️" }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500">
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        
-        {/* Floating Elements */}
-        <motion.div 
-          className="absolute top-20 left-10 text-6xl"
-          animate={floatingAnimation}
-          style={{ animationDelay: "0s" }}
-        >
-          🎲
-        </motion.div>
-        <motion.div 
-          className="absolute top-40 right-20 text-5xl"
-          animate={floatingAnimation}
-          style={{ animationDelay: "1s" }}
-        >
-          🎡
-        </motion.div>
-        <motion.div 
-          className="absolute bottom-32 left-20 text-5xl"
-          animate={floatingAnimation}
-          style={{ animationDelay: "2s" }}
-        >
-          🪙
-        </motion.div>
-
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <motion.h1 
-            className="text-5xl md:text-7xl font-bold text-white mb-6"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,.1)_50%,transparent_75%,transparent_100%)] bg-[length:60px_60px] animate-pulse"></div>
+        {floatingElements.map((element, index) => (
+          <motion.div
+            key={index}
+            className="absolute text-4xl opacity-20"
+            style={{
+              left: `${15 + (index * 15)}%`,
+              top: `${20 + (index % 3) * 25}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              rotate: [0, 360],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{
+              duration: element.duration,
+              delay: element.delay,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           >
-            Stop Arguing.<br />
-            <span className="bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">
-              Start Rolling 🎲
+            {element.emoji}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Mouse Follower */}
+      <motion.div
+        className="fixed w-6 h-6 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full pointer-events-none z-50 mix-blend-screen"
+        style={{
+          left: mousePosition.x - 12,
+          top: mousePosition.y - 12,
+        }}
+        animate={{
+          scale: [1, 1.5, 1],
+        }}
+        transition={{
+          duration: 0.3,
+          ease: "easeOut"
+        }}
+      />
+
+      {/* Hero Section */}
+      <motion.section 
+        className="relative min-h-screen flex items-center justify-center"
+        style={{ y: parallaxY, opacity: opacityRange }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/30 to-black/50"></div>
+        
+        <motion.div 
+          className="relative z-10 text-center px-4 max-w-6xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.h1 
+            className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-8 leading-tight"
+            variants={itemVariants}
+          >
+            Stop The Drama.<br />
+            <span className="bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent">
+              Roll The Dice 🎲
             </span>
           </motion.h1>
           
           <motion.p 
-            className="text-xl md:text-2xl text-white/90 mb-8 leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-2xl md:text-3xl text-gray-200 mb-12 leading-relaxed max-w-4xl mx-auto"
+            variants={itemVariants}
           >
-            DiceyDecisions makes group choices fun, fair, and fast.
+            Transform group arguments into epic moments of fun with 
+            <span className="text-purple-400 font-bold"> DiceyDecisions</span> - 
+            where every choice becomes an adventure.
           </motion.p>
           
           <motion.div 
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+            variants={itemVariants}
           >
             <Button 
               onClick={() => onNavigate("login")}
-              className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold text-lg px-8 py-4 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden"
             >
-              Get Started 🚀
+              <span className="relative z-10">Start Rolling 🚀</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Button>
             <Button 
               onClick={() => onNavigate("join-room")}
               variant="outline"
-              className="border-2 border-white text-white hover:bg-white hover:text-purple-600 font-bold text-lg px-8 py-4 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="group border-4 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold text-xl px-12 py-6 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 bg-transparent backdrop-blur-sm"
             >
-              Join Room 🎯
+              Join The Fun 🎯
             </Button>
           </motion.div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.h2 
-            className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
-            {...fadeInUp}
-          >
-            How It Works
-          </motion.h2>
-          
+          {/* Stats */}
           <motion.div 
-            className="grid md:grid-cols-3 gap-8"
-            variants={staggerChildren}
-            initial="initial"
-            whileInView="animate"
+            className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20"
+            variants={containerVariants}
+          >
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                className="text-center group cursor-pointer"
+                variants={itemVariants}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="text-4xl mb-2 group-hover:animate-bounce">{stat.icon}</div>
+                <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.number}</div>
+                <div className="text-gray-400 font-medium">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </motion.section>
+
+      {/* Features Section */}
+      <section className="py-32 relative">
+        <div className="max-w-7xl mx-auto px-4">
+          <motion.h2 
+            className="text-5xl md:text-6xl font-black text-center mb-20 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <motion.div 
-              className="text-center"
-              variants={fadeInUp}
-            >
-              <div className="text-6xl mb-4">🎯</div>
-              <h3 className="text-2xl font-bold mb-4 text-gray-800">Create a Room</h3>
-              <p className="text-gray-600 text-lg">Set up your decision room and invite your friends with a simple code.</p>
-            </motion.div>
-            
-            <motion.div 
-              className="text-center"
-              variants={fadeInUp}
-            >
-              <div className="text-6xl mb-4">🤫</div>
-              <h3 className="text-2xl font-bold mb-4 text-gray-800">Submit & Vote</h3>
-              <p className="text-gray-600 text-lg">Everyone adds options and votes anonymously for maximum fairness.</p>
-            </motion.div>
-            
-            <motion.div 
-              className="text-center"
-              variants={fadeInUp}
-            >
-              <div className="text-6xl mb-4">🎲</div>
-              <h3 className="text-2xl font-bold mb-4 text-gray-800">Let Fate Decide</h3>
-              <p className="text-gray-600 text-lg">If there's a tie, our fun tiebreakers will settle it once and for all!</p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.h2 
-            className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-            {...fadeInUp}
-          >
-            Why You'll Love It
+            Why You'll Be Obsessed
           </motion.h2>
           
           <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={staggerChildren}
-            initial="initial"
-            whileInView="animate"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
           >
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                variants={fadeInUp}
-                whileHover={{ scale: 1.05 }}
+                variants={itemVariants}
                 onHoverStart={() => setHoveredFeature(index)}
                 onHoverEnd={() => setHoveredFeature(null)}
+                whileHover={{ 
+                  scale: 1.05,
+                  rotateY: 5,
+                }}
+                className="group cursor-pointer"
               >
-                <Card className={`h-full cursor-pointer transition-all duration-300 ${
-                  hoveredFeature === index ? 'shadow-xl bg-gradient-to-br from-white to-blue-50' : 'shadow-lg hover:shadow-xl'
+                <Card className={`h-full bg-gradient-to-br ${feature.gradient} p-1 shadow-2xl transition-all duration-300 ${
+                  hoveredFeature === index ? 'shadow-purple-500/50' : ''
                 }`}>
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-4">{feature.icon}</div>
-                    <h3 className="text-xl font-bold mb-3 text-gray-800">{feature.title}</h3>
-                    <p className="text-gray-600">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.h2 
-            className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"
-            {...fadeInUp}
-          >
-            What People Say
-          </motion.h2>
-          
-          <motion.div 
-            className="grid md:grid-cols-3 gap-8"
-            variants={staggerChildren}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-          >
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                variants={fadeInUp}
-                whileHover={{ y: -5 }}
-              >
-                <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 hover:border-yellow-300 transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="text-2xl mb-4">{testimonial.avatar}</div>
-                    <p className="text-lg mb-4 text-gray-700 italic">"{testimonial.text}"</p>
-                    <p className="font-semibold text-gray-800">- {testimonial.author}</p>
+                  <CardContent className="bg-black/80 backdrop-blur-sm rounded-lg p-8 h-full flex flex-col">
+                    <div className="text-6xl mb-6 group-hover:animate-spin transition-transform duration-500">
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-pink-400 transition-all duration-300">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-300 text-lg leading-relaxed flex-1">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -283,93 +277,108 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 relative overflow-hidden">
+      <section className="py-32 relative overflow-hidden">
         <motion.div 
-          className="absolute top-10 left-10 text-4xl opacity-20"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        >
-          🎲
-        </motion.div>
-        <motion.div 
-          className="absolute bottom-10 right-10 text-4xl opacity-20"
-          animate={{ rotate: -360 }}
-          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-        >
-          🎡
-        </motion.div>
+          className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-red-500/20"
+          animate={{
+            background: [
+              "linear-gradient(45deg, rgba(147, 51, 234, 0.2), rgba(219, 39, 119, 0.2), rgba(239, 68, 68, 0.2))",
+              "linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(147, 51, 234, 0.2), rgba(219, 39, 119, 0.2))",
+              "linear-gradient(225deg, rgba(219, 39, 119, 0.2), rgba(239, 68, 68, 0.2), rgba(147, 51, 234, 0.2))",
+              "linear-gradient(315deg, rgba(147, 51, 234, 0.2), rgba(219, 39, 119, 0.2), rgba(239, 68, 68, 0.2))"
+            ]
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
         
-        <div className="relative z-10 max-w-4xl mx-auto text-center px-4">
+        <div className="relative z-10 max-w-5xl mx-auto text-center px-4">
           <motion.h2 
-            className="text-4xl md:text-6xl font-bold text-white mb-6"
-            initial={{ opacity: 0, y: 30 }}
+            className="text-5xl md:text-7xl font-black text-white mb-8"
+            initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
           >
             Ready to Roll? 🎲
           </motion.h2>
           <motion.p 
-            className="text-xl text-white/90 mb-8"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-2xl text-gray-300 mb-12 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ delay: 0.2 }}
           >
-            Join thousands making decisions the fun way!
+            Join thousands of groups who've discovered the secret to stress-free decision making!
           </motion.p>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ delay: 0.4, type: "spring", damping: 20 }}
           >
             <Button 
               onClick={() => onNavigate("login")}
-              className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-xl px-12 py-6 rounded-full shadow-xl transform hover:scale-105 transition-all duration-200"
+              className="group relative bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:via-purple-400 hover:to-pink-400 text-white font-black text-2xl px-16 py-8 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden"
             >
-              Sign Up Free 🎉
+              <span className="relative z-10 flex items-center gap-3">
+                Let's Go! 🎉
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  🎲
+                </motion.span>
+              </span>
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-0 group-hover:opacity-100"
+                transition={{ duration: 0.3 }}
+              />
             </Button>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-black/60 backdrop-blur-sm border-t border-purple-500/30 py-16">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-12 text-center md:text-left">
             <div>
-              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <h3 className="text-3xl font-black mb-4 flex items-center justify-center md:justify-start gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                 🎲 DiceyDecisions
               </h3>
-              <p className="text-gray-400">
-                Making group decisions fun, fair, and fast since 2024.
+              <p className="text-gray-400 text-lg">
+                Making group decisions epic since 2024.
               </p>
             </div>
             
             <div>
-              <h4 className="text-lg font-semibold mb-4">Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
+              <h4 className="text-xl font-bold mb-4 text-white">Quick Links</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><a href="#" className="hover:text-purple-400 transition-colors text-lg">About</a></li>
+                <li><a href="#" className="hover:text-purple-400 transition-colors text-lg">Contact</a></li>
+                <li><a href="#" className="hover:text-purple-400 transition-colors text-lg">Privacy</a></li>
+                <li><a href="#" className="hover:text-purple-400 transition-colors text-lg">Terms</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
-              <div className="flex space-x-4 text-2xl">
-                <span className="cursor-pointer hover:scale-110 transition-transform">📱</span>
-                <span className="cursor-pointer hover:scale-110 transition-transform">🐦</span>
-                <span className="cursor-pointer hover:scale-110 transition-transform">📘</span>
-                <span className="cursor-pointer hover:scale-110 transition-transform">📸</span>
+              <h4 className="text-xl font-bold mb-4 text-white">Connect</h4>
+              <div className="flex justify-center md:justify-start space-x-6 text-3xl">
+                {["📱", "🐦", "📘", "📸"].map((emoji, index) => (
+                  <motion.span 
+                    key={index}
+                    className="cursor-pointer hover:scale-125 transition-transform duration-200"
+                    whileHover={{ rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    {emoji}
+                  </motion.span>
+                ))}
               </div>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 DiceyDecisions. All rights reserved. Made with 💜 for better decisions.</p>
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500">
+            <p className="text-lg">&copy; 2024 DiceyDecisions. All rights reserved. Made with 💜 for better decisions.</p>
           </div>
         </div>
       </footer>
