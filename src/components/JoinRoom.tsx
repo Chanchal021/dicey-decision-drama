@@ -24,12 +24,16 @@ const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
     e.preventDefault();
     if (!roomCode.trim() || !user) return;
 
+    console.log("Looking for room with code:", roomCode.trim());
+    console.log("Available rooms:", rooms);
+    console.log("Room codes:", rooms.map(r => r.code));
+
     const room = rooms.find(r => r.code.toLowerCase() === roomCode.trim().toLowerCase());
     
     if (!room) {
       toast({
         title: "Room not found 😕",
-        description: "Double-check the room code and try again",
+        description: `No room found with code "${roomCode}". Available rooms: ${rooms.length}`,
         variant: "destructive"
       });
       return;
@@ -108,6 +112,14 @@ const JoinRoom = ({ user, rooms, onRoomJoined, onNavigate }: JoinRoomProps) => {
               >
                 Join Room 🎯
               </Button>
+
+              {rooms.length > 0 && (
+                <div className="text-center text-sm text-gray-600">
+                  Debug: {rooms.length} room(s) available
+                  <br />
+                  Codes: {rooms.map(r => r.code).join(", ")}
+                </div>
+              )}
             </CardContent>
           </form>
 
