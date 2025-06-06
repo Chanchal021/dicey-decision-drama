@@ -14,6 +14,51 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
 
     console.log('Setting up real-time subscription for room:', roomId);
 
+    const fetchAndFormatRoom = async () => {
+      const { data: updatedRoom, error } = await supabase
+        .from('rooms')
+        .select(`
+          *,
+          room_participants (
+            id,
+            user_id,
+            display_name,
+            joined_at
+          ),
+          options (
+            id,
+            text,
+            submitted_by,
+            created_at
+          ),
+          votes (
+            id,
+            user_id,
+            option_id,
+            created_at
+          )
+        `)
+        .eq('id', roomId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching updated room:', error);
+        return;
+      }
+
+      if (updatedRoom) {
+        // Ensure all joined data is properly formatted as arrays
+        const formattedRoom = {
+          ...updatedRoom,
+          room_participants: Array.isArray(updatedRoom.room_participants) ? updatedRoom.room_participants : [],
+          options: Array.isArray(updatedRoom.options) ? updatedRoom.options : [],
+          votes: Array.isArray(updatedRoom.votes) ? updatedRoom.votes : []
+        } as Room;
+
+        onRoomUpdate(formattedRoom);
+      }
+    };
+
     const channel = supabase
       .channel(`room_${roomId}`)
       .on(
@@ -26,42 +71,7 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         },
         async (payload) => {
           console.log('Room updated:', payload);
-          
-          // Fetch updated room data with all relationships
-          const { data: updatedRoom, error } = await supabase
-            .from('rooms')
-            .select(`
-              *,
-              room_participants (
-                id,
-                user_id,
-                display_name,
-                joined_at
-              ),
-              options (
-                id,
-                text,
-                submitted_by,
-                created_at
-              ),
-              votes (
-                id,
-                user_id,
-                option_id,
-                created_at
-              )
-            `)
-            .eq('id', roomId)
-            .single();
-
-          if (error) {
-            console.error('Error fetching updated room:', error);
-            return;
-          }
-
-          if (updatedRoom) {
-            onRoomUpdate(updatedRoom);
-          }
+          await fetchAndFormatRoom();
         }
       )
       .on(
@@ -74,42 +84,7 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         },
         async (payload) => {
           console.log('Room participants updated:', payload);
-          
-          // Fetch updated room data
-          const { data: updatedRoom, error } = await supabase
-            .from('rooms')
-            .select(`
-              *,
-              room_participants (
-                id,
-                user_id,
-                display_name,
-                joined_at
-              ),
-              options (
-                id,
-                text,
-                submitted_by,
-                created_at
-              ),
-              votes (
-                id,
-                user_id,
-                option_id,
-                created_at
-              )
-            `)
-            .eq('id', roomId)
-            .single();
-
-          if (error) {
-            console.error('Error fetching updated room:', error);
-            return;
-          }
-
-          if (updatedRoom) {
-            onRoomUpdate(updatedRoom);
-          }
+          await fetchAndFormatRoom();
         }
       )
       .on(
@@ -122,42 +97,7 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         },
         async (payload) => {
           console.log('Options updated:', payload);
-          
-          // Fetch updated room data
-          const { data: updatedRoom, error } = await supabase
-            .from('rooms')
-            .select(`
-              *,
-              room_participants (
-                id,
-                user_id,
-                display_name,
-                joined_at
-              ),
-              options (
-                id,
-                text,
-                submitted_by,
-                created_at
-              ),
-              votes (
-                id,
-                user_id,
-                option_id,
-                created_at
-              )
-            `)
-            .eq('id', roomId)
-            .single();
-
-          if (error) {
-            console.error('Error fetching updated room:', error);
-            return;
-          }
-
-          if (updatedRoom) {
-            onRoomUpdate(updatedRoom);
-          }
+          await fetchAndFormatRoom();
         }
       )
       .on(
@@ -170,42 +110,7 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         },
         async (payload) => {
           console.log('Votes updated:', payload);
-          
-          // Fetch updated room data
-          const { data: updatedRoom, error } = await supabase
-            .from('rooms')
-            .select(`
-              *,
-              room_participants (
-                id,
-                user_id,
-                display_name,
-                joined_at
-              ),
-              options (
-                id,
-                text,
-                submitted_by,
-                created_at
-              ),
-              votes (
-                id,
-                user_id,
-                option_id,
-                created_at
-              )
-            `)
-            .eq('id', roomId)
-            .single();
-
-          if (error) {
-            console.error('Error fetching updated room:', error);
-            return;
-          }
-
-          if (updatedRoom) {
-            onRoomUpdate(updatedRoom);
-          }
+          await fetchAndFormatRoom();
         }
       )
       .subscribe((status) => {

@@ -77,7 +77,15 @@ export const useRoomData = (userId?: string) => {
         return;
       }
 
-      setRooms(data || []);
+      // Ensure all joined data is properly formatted as arrays
+      const formattedRooms = (data || []).map(room => ({
+        ...room,
+        room_participants: Array.isArray(room.room_participants) ? room.room_participants : [],
+        options: Array.isArray(room.options) ? room.options : [],
+        votes: Array.isArray(room.votes) ? room.votes : []
+      })) as Room[];
+
+      setRooms(formattedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
     } finally {
