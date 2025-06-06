@@ -71,6 +71,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       if (participantError) {
         console.error('Error adding creator as participant:', participantError);
+        // Don't throw here - room is still created successfully
       }
 
       toast({
@@ -106,7 +107,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     try {
       console.log('Joining room with code:', roomCode);
       
-      // Find room by code - explicitly specify table alias to avoid ambiguity
+      // Find room by code
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')

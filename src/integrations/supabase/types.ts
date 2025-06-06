@@ -153,13 +153,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_room_access: {
+        Args: { target_room_id: string; target_user_id: string }
+        Returns: boolean
+      }
       generate_room_code: {
         Args: Record<PropertyKey, never>
         Returns: string
-      }
-      user_can_access_room: {
-        Args: { room_id: string; user_id: string }
-        Returns: boolean
       }
     }
     Enums: {
