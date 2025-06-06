@@ -23,7 +23,6 @@ const Index = () => {
 
   const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) : null;
 
-  // All useEffect hooks must be called in the same order every time
   // Check for room code in URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -33,7 +32,7 @@ const Index = () => {
       // Clear the URL parameter for cleaner URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []); // Only run once on mount
+  }, []);
 
   // Handle navigation based on user login status and room code
   useEffect(() => {
@@ -52,6 +51,27 @@ const Index = () => {
     }
   }, [user, initialRoomCode, currentScreen, authLoading]);
 
+  // Auto-navigate based on room state when room is selected
+  useEffect(() => {
+    if (currentRoom && currentScreen === "room-lobby") {
+      const totalVotes = currentRoom.votes?.length || 0;
+      const totalParticipants = currentRoom.room_participants?.length || 0;
+      
+      // If room is resolved, go to results
+      if (currentRoom.resolved_at) {
+        setCurrentScreen("results");
+      }
+      // If voting is active and all votes are in, go to results
+      else if (currentRoom.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0) {
+        setCurrentScreen("results");
+      }
+      // If voting is active but not all votes are in, go to voting
+      else if (currentRoom.is_voting_active) {
+        setCurrentScreen("voting");
+      }
+    }
+  }, [currentRoom, currentScreen]);
+
   const screenVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -68,9 +88,28 @@ const Index = () => {
   }
 
   const handleRoomUpdated = (updatedRoom: any) => {
-    // This would typically update the room in the backend
-    // For now, we'll just log it
     console.log('Room updated:', updatedRoom);
+  };
+
+  const handleNavigateToRoom = (roomId: string) => {
+    setCurrentRoomId(roomId);
+    const room = rooms.find(r => r.id === roomId);
+    
+    if (room) {
+      const totalVotes = room.votes?.length || 0;
+      const totalParticipants = room.room_participants?.length || 0;
+      
+      // Navigate to appropriate screen based on room state
+      if (room.resolved_at) {
+        setCurrentScreen("results");
+      } else if (room.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0) {
+        setCurrentScreen("results");
+      } else if (room.is_voting_active) {
+        setCurrentScreen("voting");
+      } else {
+        setCurrentScreen("room-lobby");
+      }
+    }
   };
 
   const renderScreen = () => {
@@ -80,7 +119,7 @@ const Index = () => {
       case "login":
         return <LoginScreen onNavigate={setCurrentScreen} />;
       case "dashboard":
-        return <Dashboard user={user} rooms={rooms} onNavigate={setCurrentScreen} />;
+        return <Dashboard user={user} rooms={rooms} onNavigate={setCurrentScreen} onNavigateToRoom={handleNavigateToRoom} />;
       case "create-room":
         return <CreateRoom 
           user={user}
@@ -97,13 +136,12 @@ const Index = () => {
         return <JoinRoom 
           initialRoomCode={initialRoomCode}
           onRoomJoined={async (roomCode, displayName) => {
-            // Use initial room code if available, otherwise use the entered code
             const codeToUse = initialRoomCode || roomCode;
             const room = await joinRoom(codeToUse, displayName);
             if (room) {
               setCurrentRoomId(room.id);
-              setCurrentScreen("room-lobby");
-              setInitialRoomCode(null); // Clear the initial room code
+              handleNavigateToRoom(room.id);
+              setInitialRoomCode(null);
             }
           }} 
           onNavigate={setCurrentScreen} 

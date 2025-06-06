@@ -9,9 +9,10 @@ interface DashboardProps {
   user: User | null;
   rooms: Room[];
   onNavigate: (screen: Screen) => void;
+  onNavigateToRoom: (roomId: string) => void;
 }
 
-const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
+const Dashboard = ({ user, rooms, onNavigate, onNavigateToRoom }: DashboardProps) => {
   const { toast } = useToast();
   const recentRooms = rooms.filter(room => room.resolved_at).slice(0, 3);
 
@@ -131,10 +132,7 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                   variants={itemVariants}
                   whileHover={{ scale: 1.02 }}
                   className="cursor-pointer"
-                  onClick={() => {
-                    // Navigate to room lobby or appropriate screen based on room state
-                    onNavigate("room-lobby");
-                  }}
+                  onClick={() => onNavigateToRoom(room.id)}
                 >
                   <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all">
                     <CardHeader>
@@ -177,6 +175,13 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                           <span>{new Date(room.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
+                      {room.is_voting_active && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            🗳️ Voting Active
+                          </span>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>
