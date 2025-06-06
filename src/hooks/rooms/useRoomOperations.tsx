@@ -124,11 +124,11 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     try {
       console.log('Joining room with code:', roomCode);
       
-      // Find room by code with case-insensitive search and ensure it's open
+      // Find room by code with exact match and ensure it's open
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')
-        .ilike('code', roomCode)
+        .eq('code', roomCode.toUpperCase())
         .eq('is_open', true)
         .maybeSingle();
 
@@ -139,12 +139,31 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       if (!room) {
         console.error('Room not found with code:', roomCode);
-        toast({
-          title: "Room not found 😕",
-          description: `No active room found with code "${roomCode}". Please check the code and try again.`,
-          variant: "destructive"
-        });
-        return null;
+        
+        // Also try a case-insensitive search as fallback
+        const { data: fallbackRoom, error: fallbackError } = await supabase
+          .from('rooms')
+          .select('*')
+          .ilike('code', roomCode)
+          .eq('is_open', true)
+          .maybeSingle();
+
+        if (fallbackError) {
+          console.error('Error in fallback search:', fallbackError);
+        }
+
+        if (!fallbackRoom) {
+          toast({
+            title: "Room not found 😕",
+            description: `No active room found with code "${roomCode}". Please check the code and try again.`,
+            variant: "destructive"
+          });
+          return null;
+        }
+        
+        // Use the fallback room if found
+        console.log('Found room via fallback search:', fallbackRoom);
+        room = fallbackRoom;
       }
 
       console.log('Found room:', room);
