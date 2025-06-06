@@ -5,6 +5,7 @@ import RoomHeader from "@/components/room/RoomHeader";
 import ParticipantsList from "@/components/room/ParticipantsList";
 import DecisionOptions from "@/components/room/DecisionOptions";
 import VotingStatus from "@/components/room/VotingStatus";
+import { useRoomRealtime } from "@/hooks/useRoomRealtime";
 
 interface RoomLobbyProps {
   room: Room | null;
@@ -14,6 +15,12 @@ interface RoomLobbyProps {
 }
 
 const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) => {
+  // Set up real-time updates for this specific room
+  useRoomRealtime({
+    roomId: room?.id || null,
+    onRoomUpdate: onRoomUpdated
+  });
+
   if (!room || !user) return null;
 
   return (

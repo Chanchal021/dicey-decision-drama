@@ -8,6 +8,7 @@ import { Screen, User, Room } from "@/types";
 import { Check, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRoomRealtime } from "@/hooks/useRoomRealtime";
 
 interface VotingScreenProps {
   room: Room | null;
@@ -20,19 +21,41 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(room);
   const { toast } = useToast();
 
-  if (!room || !user) return null;
+  // Set up real-time updates for this room
+  useRoomRealtime({
+    roomId: room?.id || null,
+    onRoomUpdate: (updatedRoom) => {
+      setCurrentRoom(updatedRoom);
+      
+      // Check if all votes are in and trigger results
+      const totalVotes = updatedRoom.votes?.length || 0;
+      const totalParticipants = updatedRoom.participants?.length || 0;
+      
+      if (totalVotes >= totalParticipants && totalParticipants > 0) {
+        console.log('All votes collected, transitioning to results');
+        setTimeout(() => {
+          onVoteSubmitted(updatedRoom);
+        }, 1500);
+      }
+    }
+  });
+
+  const workingRoom = currentRoom || room;
+
+  if (!workingRoom || !user) return null;
 
   // Check if user has already voted
   useEffect(() => {
-    const userHasVoted = room.votes?.some(vote => vote.user_id === user.id) || false;
+    const userHasVoted = workingRoom.votes?.some(vote => vote.user_id === user.id) || false;
     setHasVoted(userHasVoted);
-  }, [room.votes, user.id]);
+  }, [workingRoom.votes, user.id]);
 
-  const totalVotes = room.votes?.length || 0;
-  const totalParticipants = room.participants?.length || 0;
-  const shuffledOptions = [...room.options].sort(() => Math.random() - 0.5);
+  const totalVotes = workingRoom.votes?.length || 0;
+  const totalParticipants = workingRoom.participants?.length || 0;
+  const shuffledOptions = [...workingRoom.options].sort(() => Math.random() - 0.5);
 
   const handleVote = (option: string) => {
     if (hasVoted || isSubmitting) return;
@@ -48,7 +71,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
       const { error } = await supabase
         .from('votes')
         .insert({
-          room_id: room.id,
+          room_id: workingRoom.id,
           user_id: user.id,
           option: selectedOption
         });
@@ -69,12 +92,6 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
         description: `You voted for: ${selectedOption}`,
       });
 
-      // Check if all votes are in
-      if (totalVotes + 1 >= totalParticipants) {
-        setTimeout(() => {
-          onVoteSubmitted(room);
-        }, 1500);
-      }
     } catch (error) {
       console.error('Error submitting vote:', error);
       toast({
@@ -153,7 +170,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
             <CardTitle className="text-3xl font-bold text-purple-600 mb-2">
               Time to Vote!
             </CardTitle>
-            <p className="text-xl text-gray-600 mb-4">{room.title}</p>
+            <p className="text-xl text-gray-600 mb-4">{workingRoom.title}</p>
             <div className="flex items-center justify-center space-x-4">
               <Badge variant="secondary" className="text-lg px-3 py-1">
                 <Users className="w-4 h-4 mr-1" />
@@ -169,7 +186,15 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
 
         {/* Voting Options */}
         <motion.div
-          variants={containerVariants}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1
+              }
+            }
+          }}
           initial="hidden"
           animate="visible"
           className="grid md:grid-cols-2 gap-4 mb-8"
@@ -177,8 +202,14 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
           {shuffledOptions.map((option, index) => (
             <motion.div
               key={option}
-              variants={cardVariants}
-              whileHover="hover"
+              variants={{
+                hidden: { y: 20, opacity: 0 },
+                visible: { y: 0, opacity: 1 }
+              }}
+              whileHover={{ 
+                scale: 1.05, 
+                transition: { duration: 0.2 } 
+              }}
               whileTap={{ scale: 0.95 }}
               className="cursor-pointer"
               onClick={() => handleVote(option)}

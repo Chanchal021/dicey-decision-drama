@@ -61,6 +61,12 @@ export const useRooms = (userId?: string) => {
 
       const roomIds = participantRooms?.map(p => p.room_id) || [];
 
+      if (roomIds.length === 0) {
+        setRooms([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('rooms')
         .select(`
@@ -270,28 +276,47 @@ export const useRooms = (userId?: string) => {
     fetchRooms();
   }, [userId]);
 
-  // Set up real-time subscriptions
+  // Enhanced real-time subscriptions with better error handling
   useEffect(() => {
     if (!userId) return;
 
-    const subscription = supabase
-      .channel('rooms_channel')
+    console.log('Setting up real-time subscriptions for user:', userId);
+
+    const channel = supabase
+      .channel('user_rooms_channel')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'rooms' }, 
-        () => fetchRooms()
+        (payload) => {
+          console.log('Rooms table changed:', payload);
+          fetchRooms();
+        }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'participants' }, 
-        () => fetchRooms()
+        (payload) => {
+          console.log('Participants table changed:', payload);
+          fetchRooms();
+        }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'votes' }, 
-        () => fetchRooms()
+        (payload) => {
+          console.log('Votes table changed:', payload);
+          fetchRooms();
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to real-time updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Real-time subscription error');
+        }
+      });
 
     return () => {
-      supabase.removeChannel(subscription);
+      console.log('Cleaning up real-time subscriptions');
+      supabase.removeChannel(channel);
     };
   }, [userId]);
 
