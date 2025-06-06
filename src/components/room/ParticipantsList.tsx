@@ -16,13 +16,13 @@ const ParticipantsList = ({ room, user }: ParticipantsListProps) => {
       <CardHeader>
         <CardTitle className="flex items-center text-xl">
           <Users className="w-5 h-5 mr-2 text-blue-500" />
-          Participants ({room.participants?.length || 0})
+          Participants ({room.room_participants?.length || 0})
           {room.max_participants && ` / ${room.max_participants}`}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2">
-          {room.participants?.map((participant, index) => (
+          {room.room_participants?.map((participant, index) => (
             <motion.div
               key={participant.id}
               initial={{ scale: 0 }}

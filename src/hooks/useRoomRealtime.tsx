@@ -32,17 +32,23 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
             .from('rooms')
             .select(`
               *,
-              participants (
+              room_participants (
                 id,
                 user_id,
                 display_name,
                 joined_at
               ),
+              options (
+                id,
+                text,
+                submitted_by,
+                created_at
+              ),
               votes (
                 id,
                 user_id,
-                option,
-                voted_at
+                option_id,
+                created_at
               )
             `)
             .eq('id', roomId)
@@ -63,28 +69,82 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         {
           event: '*',
           schema: 'public',
-          table: 'participants',
+          table: 'room_participants',
           filter: `room_id=eq.${roomId}`
         },
         async (payload) => {
-          console.log('Participants updated:', payload);
+          console.log('Room participants updated:', payload);
           
           // Fetch updated room data
           const { data: updatedRoom, error } = await supabase
             .from('rooms')
             .select(`
               *,
-              participants (
+              room_participants (
                 id,
                 user_id,
                 display_name,
                 joined_at
               ),
+              options (
+                id,
+                text,
+                submitted_by,
+                created_at
+              ),
               votes (
                 id,
                 user_id,
-                option,
-                voted_at
+                option_id,
+                created_at
+              )
+            `)
+            .eq('id', roomId)
+            .single();
+
+          if (error) {
+            console.error('Error fetching updated room:', error);
+            return;
+          }
+
+          if (updatedRoom) {
+            onRoomUpdate(updatedRoom);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'options',
+          filter: `room_id=eq.${roomId}`
+        },
+        async (payload) => {
+          console.log('Options updated:', payload);
+          
+          // Fetch updated room data
+          const { data: updatedRoom, error } = await supabase
+            .from('rooms')
+            .select(`
+              *,
+              room_participants (
+                id,
+                user_id,
+                display_name,
+                joined_at
+              ),
+              options (
+                id,
+                text,
+                submitted_by,
+                created_at
+              ),
+              votes (
+                id,
+                user_id,
+                option_id,
+                created_at
               )
             `)
             .eq('id', roomId)
@@ -116,17 +176,23 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
             .from('rooms')
             .select(`
               *,
-              participants (
+              room_participants (
                 id,
                 user_id,
                 display_name,
                 joined_at
               ),
+              options (
+                id,
+                text,
+                submitted_by,
+                created_at
+              ),
               votes (
                 id,
                 user_id,
-                option,
-                voted_at
+                option_id,
+                created_at
               )
             `)
             .eq('id', roomId)

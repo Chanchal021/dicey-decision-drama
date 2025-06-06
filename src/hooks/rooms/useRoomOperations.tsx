@@ -38,8 +38,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           description: roomData.description,
           code: codeData,
           max_participants: roomData.maxParticipants,
-          creator_id: userId,
-          options: roomData.options
+          creator_id: userId
         })
         .select()
         .single();
@@ -62,7 +61,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       // Add creator as participant
       const { error: participantError } = await supabase
-        .from('participants')
+        .from('room_participants')
         .insert({
           room_id: room.id,
           user_id: userId,
@@ -72,6 +71,24 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       if (participantError) {
         console.error('Error adding creator as participant:', participantError);
         // Don't throw here - room is still created successfully
+      }
+
+      // Create options for the room
+      if (roomData.options && roomData.options.length > 0) {
+        const optionsToInsert = roomData.options.map(option => ({
+          room_id: room.id,
+          submitted_by: userId,
+          text: option
+        }));
+
+        const { error: optionsError } = await supabase
+          .from('options')
+          .insert(optionsToInsert);
+
+        if (optionsError) {
+          console.error('Error creating options:', optionsError);
+          // Don't throw here - room is still created successfully
+        }
       }
 
       toast({
@@ -112,6 +129,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .from('rooms')
         .select('*')
         .eq('code', roomCode.toUpperCase())
+        .eq('is_open', true)
         .single();
 
       if (roomError || !room) {
@@ -128,7 +146,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       // Check if room is full
       const { data: participants, error: participantsError } = await supabase
-        .from('participants')
+        .from('room_participants')
         .select('id')
         .eq('room_id', room.id);
 
@@ -150,7 +168,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       // Check if user is already in the room
       const { data: existingParticipant } = await supabase
-        .from('participants')
+        .from('room_participants')
         .select('id')
         .eq('room_id', room.id)
         .eq('user_id', userId)
@@ -160,7 +178,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         console.log('Adding user as participant');
         // Add user as participant
         const { error: joinError } = await supabase
-          .from('participants')
+          .from('room_participants')
           .insert({
             room_id: room.id,
             user_id: userId,

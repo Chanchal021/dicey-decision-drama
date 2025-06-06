@@ -32,7 +32,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
       
       // Check if all votes are in and trigger results
       const totalVotes = updatedRoom.votes?.length || 0;
-      const totalParticipants = updatedRoom.participants?.length || 0;
+      const totalParticipants = updatedRoom.room_participants?.length || 0;
       
       if (totalVotes >= totalParticipants && totalParticipants > 0) {
         console.log('All votes collected, transitioning to results');
@@ -54,12 +54,13 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
   }, [workingRoom.votes, user.id]);
 
   const totalVotes = workingRoom.votes?.length || 0;
-  const totalParticipants = workingRoom.participants?.length || 0;
-  const shuffledOptions = [...workingRoom.options].sort(() => Math.random() - 0.5);
+  const totalParticipants = workingRoom.room_participants?.length || 0;
+  const options = workingRoom.options || [];
+  const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
 
-  const handleVote = (option: string) => {
+  const handleVote = (optionId: string) => {
     if (hasVoted || isSubmitting) return;
-    setSelectedOption(option);
+    setSelectedOption(optionId);
   };
 
   const handleSubmitVote = async () => {
@@ -73,7 +74,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
         .insert({
           room_id: workingRoom.id,
           user_id: user.id,
-          option: selectedOption
+          option_id: selectedOption
         });
 
       if (error) {
@@ -87,9 +88,11 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
 
       setHasVoted(true);
       
+      const selectedOptionText = options.find(opt => opt.id === selectedOption)?.text || 'Unknown option';
+      
       toast({
         title: "Vote submitted! 🗳️",
-        description: `You voted for: ${selectedOption}`,
+        description: `You voted for: ${selectedOptionText}`,
       });
 
     } catch (error) {
@@ -101,25 +104,6 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
       });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const cardVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 },
-    hover: { 
-      scale: 1.05, 
-      transition: { duration: 0.2 } 
     }
   };
 
@@ -201,7 +185,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
         >
           {shuffledOptions.map((option, index) => (
             <motion.div
-              key={option}
+              key={option.id}
               variants={{
                 hidden: { y: 20, opacity: 0 },
                 visible: { y: 0, opacity: 1 }
@@ -212,11 +196,11 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
               }}
               whileTap={{ scale: 0.95 }}
               className="cursor-pointer"
-              onClick={() => handleVote(option)}
+              onClick={() => handleVote(option.id)}
             >
               <Card className={`
                 transition-all duration-300 border-2
-                ${selectedOption === option 
+                ${selectedOption === option.id 
                   ? 'border-purple-500 bg-purple-50/90 shadow-lg' 
                   : 'border-gray-200 bg-white/90 hover:border-purple-300 hover:shadow-lg'
                 }
@@ -229,10 +213,10 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
                         Option {index + 1}
                       </div>
                       <div className="text-lg text-gray-800">
-                        {option}
+                        {option.text}
                       </div>
                     </div>
-                    {selectedOption === option && (
+                    {selectedOption === option.id && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}

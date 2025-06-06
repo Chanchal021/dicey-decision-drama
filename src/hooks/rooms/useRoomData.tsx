@@ -19,7 +19,7 @@ export const useRoomData = (userId?: string) => {
     try {
       // Fetch rooms where user is either creator or participant
       const { data: participantRooms, error: participantError } = await supabase
-        .from('participants')
+        .from('room_participants')
         .select('room_id')
         .eq('user_id', userId);
 
@@ -45,17 +45,23 @@ export const useRoomData = (userId?: string) => {
         .from('rooms')
         .select(`
           *,
-          participants (
+          room_participants (
             id,
             user_id,
             display_name,
             joined_at
           ),
+          options (
+            id,
+            text,
+            submitted_by,
+            created_at
+          ),
           votes (
             id,
             user_id,
-            option,
-            voted_at
+            option_id,
+            created_at
           )
         `)
         .in('id', roomIds)

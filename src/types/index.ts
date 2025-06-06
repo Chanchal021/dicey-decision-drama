@@ -16,7 +16,7 @@ export interface RoomOption {
   id: string;
   text: string;
   submitted_by: string;
-  submitted_at: string;
+  created_at: string;
 }
 
 export interface Room {
@@ -26,24 +26,31 @@ export interface Room {
   code: string;
   max_participants?: number;
   creator_id: string;
-  options: string[]; // Keep for backward compatibility
-  room_options?: RoomOption[]; // New detailed options
+  is_open: boolean;
   is_voting_active: boolean;
-  final_choice?: string;
+  final_option_id?: string;
   tiebreaker_used?: 'dice' | 'spinner' | 'coin';
-  created_at: string;
   resolved_at?: string;
-  participants?: Array<{
+  created_at: string;
+  updated_at: string;
+  // Related data from joins
+  room_participants?: Array<{
     id: string;
     user_id: string;
     display_name: string;
     joined_at: string;
   }>;
+  options?: Array<{
+    id: string;
+    text: string;
+    submitted_by: string;
+    created_at: string;
+  }>;
   votes?: Array<{
     id: string;
     user_id: string;
-    option: string;
-    voted_at: string;
+    option_id: string;
+    created_at: string;
   }>;
 }
 

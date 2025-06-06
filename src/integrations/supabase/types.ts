@@ -9,7 +9,67 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      participants: {
+      options: {
+        Row: {
+          created_at: string
+          id: string
+          room_id: string
+          submitted_by: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          room_id: string
+          submitted_by: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          room_id?: string
+          submitted_by?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "options_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "options_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      room_participants: {
         Row: {
           display_name: string
           id: string
@@ -33,37 +93,20 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "participants_room_id_fkey"
+            foreignKeyName: "room_participants_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "room_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          display_name: string
-          email: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name: string
-          email: string
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          email?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       rooms: {
         Row: {
@@ -71,79 +114,158 @@ export type Database = {
           created_at: string
           creator_id: string
           description: string | null
-          final_choice: string | null
+          final_option_id: string | null
           id: string
+          is_open: boolean
           is_voting_active: boolean
           max_participants: number | null
-          options: string[]
           resolved_at: string | null
-          tiebreaker_used:
-            | Database["public"]["Enums"]["tiebreaker_method"]
-            | null
+          tiebreaker_used: Database["public"]["Enums"]["tiebreaker_type"] | null
           title: string
+          updated_at: string
         }
         Insert: {
           code: string
           created_at?: string
           creator_id: string
           description?: string | null
-          final_choice?: string | null
+          final_option_id?: string | null
           id?: string
+          is_open?: boolean
           is_voting_active?: boolean
           max_participants?: number | null
-          options?: string[]
           resolved_at?: string | null
           tiebreaker_used?:
-            | Database["public"]["Enums"]["tiebreaker_method"]
+            | Database["public"]["Enums"]["tiebreaker_type"]
             | null
           title: string
+          updated_at?: string
         }
         Update: {
           code?: string
           created_at?: string
           creator_id?: string
           description?: string | null
-          final_choice?: string | null
+          final_option_id?: string | null
           id?: string
+          is_open?: boolean
           is_voting_active?: boolean
           max_participants?: number | null
-          options?: string[]
           resolved_at?: string | null
           tiebreaker_used?:
-            | Database["public"]["Enums"]["tiebreaker_method"]
+            | Database["public"]["Enums"]["tiebreaker_type"]
             | null
           title?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_rooms_final_option"
+            columns: ["final_option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiebreakers: {
+        Row: {
+          created_at: string
+          id: string
+          result_option_id: string
+          room_id: string
+          triggered_by: string
+          type: Database["public"]["Enums"]["tiebreaker_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          result_option_id: string
+          room_id: string
+          triggered_by: string
+          type: Database["public"]["Enums"]["tiebreaker_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          result_option_id?: string
+          room_id?: string
+          triggered_by?: string
+          type?: Database["public"]["Enums"]["tiebreaker_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiebreakers_result_option_id_fkey"
+            columns: ["result_option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiebreakers_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiebreakers_triggered_by_fkey"
+            columns: ["triggered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       votes: {
         Row: {
+          created_at: string
           id: string
-          option: string
+          option_id: string
           room_id: string
           user_id: string
-          voted_at: string
         }
         Insert: {
+          created_at?: string
           id?: string
-          option: string
+          option_id: string
           room_id: string
           user_id: string
-          voted_at?: string
         }
         Update: {
+          created_at?: string
           id?: string
-          option?: string
+          option_id?: string
           room_id?: string
           user_id?: string
-          voted_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "votes_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -163,7 +285,7 @@ export type Database = {
       }
     }
     Enums: {
-      tiebreaker_method: "dice" | "spinner" | "coin"
+      tiebreaker_type: "dice" | "spinner" | "coin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -279,7 +401,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      tiebreaker_method: ["dice", "spinner", "coin"],
+      tiebreaker_type: ["dice", "spinner", "coin"],
     },
   },
 } as const

@@ -18,9 +18,16 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
         }
       )
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'participants' }, 
+        { event: '*', schema: 'public', table: 'room_participants' }, 
         (payload) => {
-          console.log('Participants table changed:', payload);
+          console.log('Room participants table changed:', payload);
+          refetchRooms();
+        }
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'options' }, 
+        (payload) => {
+          console.log('Options table changed:', payload);
           refetchRooms();
         }
       )
