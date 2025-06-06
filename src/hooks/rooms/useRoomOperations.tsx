@@ -124,19 +124,24 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     try {
       console.log('Joining room with code:', roomCode);
       
-      // Find room by code
+      // Find room by code with case-insensitive search and ensure it's open
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')
-        .eq('code', roomCode.toUpperCase())
+        .ilike('code', roomCode)
         .eq('is_open', true)
-        .single();
+        .maybeSingle();
 
-      if (roomError || !room) {
-        console.error('Room not found:', roomError);
+      if (roomError) {
+        console.error('Error searching for room:', roomError);
+        throw roomError;
+      }
+
+      if (!room) {
+        console.error('Room not found with code:', roomCode);
         toast({
           title: "Room not found 😕",
-          description: `No room found with code "${roomCode}"`,
+          description: `No active room found with code "${roomCode}". Please check the code and try again.`,
           variant: "destructive"
         });
         return null;
@@ -172,7 +177,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .select('id')
         .eq('room_id', room.id)
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (!existingParticipant) {
         console.log('Adding user as participant');
@@ -190,7 +195,18 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           throw joinError;
         }
       } else {
-        console.log('User already in room');
+        console.log('User already in room, updating display name');
+        // Update display name if user is already in room
+        const { error: updateError } = await supabase
+          .from('room_participants')
+          .update({ display_name: displayName })
+          .eq('room_id', room.id)
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('Error updating participant:', updateError);
+          // Don't throw here - user can still join
+        }
       }
 
       toast({
