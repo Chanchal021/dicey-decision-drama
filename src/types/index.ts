@@ -27,11 +27,13 @@ export interface Room {
   resolved_at?: string;
   participants?: Array<{
     id: string;
+    user_id: string;
     display_name: string;
     joined_at: string;
   }>;
   votes?: Array<{
     id: string;
+    user_id: string;
     option: string;
     voted_at: string;
   }>;
