@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Screen, User, Room } from "@/pages/Index";
+import { Screen, User, Room } from "@/types";
 import { Users, Plus, X, Play, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +23,7 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
 
   if (!room || !user) return null;
 
-  const isCreator = room.creator === user.id;
+  const isCreator = room.creator_id === user.id;
 
   const handleAddOption = () => {
     if (!newOption.trim()) return;

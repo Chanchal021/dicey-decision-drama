@@ -12,17 +12,7 @@ import RoomLobby from "@/components/RoomLobby";
 import VotingScreen from "@/components/VotingScreen";
 import ResultsScreen from "@/components/ResultsScreen";
 import PastDecisions from "@/components/PastDecisions";
-
-export type Screen = 
-  | "landing" 
-  | "login" 
-  | "dashboard" 
-  | "create-room" 
-  | "join-room" 
-  | "room-lobby" 
-  | "voting" 
-  | "results" 
-  | "past-decisions";
+import { Screen } from "@/types";
 
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>("landing");
@@ -47,6 +37,12 @@ const Index = () => {
     );
   }
 
+  const handleRoomUpdated = (updatedRoom: any) => {
+    // This would typically update the room in the backend
+    // For now, we'll just log it
+    console.log('Room updated:', updatedRoom);
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case "landing":
@@ -54,9 +50,10 @@ const Index = () => {
       case "login":
         return <LoginScreen onNavigate={setCurrentScreen} />;
       case "dashboard":
-        return <Dashboard rooms={rooms} onNavigate={setCurrentScreen} />;
+        return <Dashboard user={user} rooms={rooms} onNavigate={setCurrentScreen} />;
       case "create-room":
         return <CreateRoom 
+          user={user}
           onRoomCreated={async (roomData) => {
             const room = await createRoom(roomData);
             if (room) {
@@ -80,11 +77,14 @@ const Index = () => {
       case "room-lobby":
         return <RoomLobby 
           room={currentRoom} 
+          user={user}
+          onRoomUpdated={handleRoomUpdated}
           onNavigate={setCurrentScreen} 
         />;
       case "voting":
         return <VotingScreen 
           room={currentRoom} 
+          user={user}
           onVoteSubmitted={() => {
             setCurrentScreen("results");
           }} 
@@ -93,6 +93,7 @@ const Index = () => {
       case "results":
         return <ResultsScreen 
           room={currentRoom} 
+          user={user}
           onComplete={() => {
             setCurrentScreen("dashboard");
           }} 
@@ -100,6 +101,7 @@ const Index = () => {
         />;
       case "past-decisions":
         return <PastDecisions 
+          user={user}
           rooms={rooms.filter(r => r.resolved_at)} 
           onNavigate={setCurrentScreen} 
         />;

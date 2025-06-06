@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Screen, User, Room } from "@/pages/Index";
+import { Screen, User, Room } from "@/types";
 import { Check, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,8 +22,8 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
 
   if (!room || !user) return null;
 
-  const userHasVoted = room.votes[user.id] !== undefined;
-  const totalVotes = Object.keys(room.votes).length;
+  const userHasVoted = room.votes?.some(vote => vote.id === user.id) || false;
+  const totalVotes = room.votes?.length || 0;
   const shuffledOptions = [...room.options].sort(() => Math.random() - 0.5);
 
   const handleVote = (option: string) => {

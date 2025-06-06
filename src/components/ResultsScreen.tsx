@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Screen, User, Room } from "@/pages/Index";
+import { Screen, User, Room } from "@/types";
 import { Trophy, RotateCcw, Home } from "lucide-react";
 
 interface ResultsScreenProps {
@@ -21,9 +20,10 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
 
   if (!room || !user) return null;
 
-  // Calculate vote results
+  // Calculate vote results with proper typing
   const voteResults = room.options.reduce((acc, option) => {
-    acc[option] = Object.values(room.votes).filter(vote => vote === option).length;
+    const voteCount = (room.votes || []).filter(vote => vote.option === option).length;
+    acc[option] = voteCount;
     return acc;
   }, {} as Record<string, number>);
 
@@ -31,6 +31,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
   const maxVotes = Math.max(...Object.values(voteResults));
   const winners = sortedResults.filter(([,votes]) => votes === maxVotes);
   const hasTie = winners.length > 1;
+  const totalVotes = (room.votes || []).length;
 
   const handleTiebreaker = (method: "dice" | "spinner" | "coin") => {
     setIsAnimating(true);
@@ -185,7 +186,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
         {/* Results */}
         <div className="space-y-4 mb-8">
           {sortedResults.map(([option, votes], index) => {
-            const percentage = (votes / Object.values(room.votes).length) * 100;
+            const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
             const isWinner = votes === maxVotes;
             
             return (

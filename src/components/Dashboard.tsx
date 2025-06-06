@@ -1,8 +1,7 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Screen, User, Room } from "@/pages/Index";
+import { Screen, User, Room } from "@/types";
 import { Plus, Clock, Users, Trophy } from "lucide-react";
 
 interface DashboardProps {
@@ -12,7 +11,7 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
-  const recentRooms = rooms.filter(room => room.resolvedAt).slice(0, 3);
+  const recentRooms = rooms.filter(room => room.resolved_at).slice(0, 3);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -40,7 +39,7 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
         {/* Header */}
         <motion.div variants={itemVariants} className="text-center mb-8">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
-            Hey {user?.name}! 👋
+            Hey {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'there'}! 👋
           </h1>
           <p className="text-xl text-white/80">
             Ready to make some decisions? Let's get this party started! 🎉
@@ -124,7 +123,7 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                               <Trophy className="w-4 h-4 mr-1 text-yellow-500" />
                               {room.finalChoice}
                             </span>
-                            <span>{room.resolvedAt?.toLocaleDateString()}</span>
+                            <span>{room.resolved_at?.toLocaleDateString()}</span>
                             {room.tiebreakerUsed && (
                               <span className="flex items-center bg-gradient-to-r from-purple-100 to-pink-100 px-2 py-1 rounded-full">
                                 {room.tiebreakerUsed === 'dice' && '🎲'}

@@ -1,9 +1,8 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Screen, User, Room } from "@/pages/Index";
+import { Screen, User, Room } from "@/types";
 import { ArrowLeft, Trophy, Users, Calendar, Zap } from "lucide-react";
 
 interface PastDecisionsProps {
@@ -16,8 +15,8 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
   if (!user) return null;
 
   const userRooms = rooms.filter(room => 
-    room.participants.includes(user.name) && room.resolvedAt
-  ).sort((a, b) => (b.resolvedAt?.getTime() || 0) - (a.resolvedAt?.getTime() || 0));
+    room.participants?.some(p => p.id === user.id) && room.resolved_at
+  ).sort((a, b) => new Date(b.resolved_at || 0).getTime() - new Date(a.resolved_at || 0).getTime());
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -171,7 +170,7 @@ const PastDecisions = ({ user, rooms, onNavigate }: PastDecisionsProps) => {
                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{room.resolvedAt?.toLocaleDateString()}</span>
+                            <span>{room.resolved_at?.toLocaleDateString()}</span>
                           </div>
                           
                           <div className="flex items-center space-x-1">

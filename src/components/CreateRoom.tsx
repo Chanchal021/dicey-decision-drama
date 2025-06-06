@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,13 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Screen, User, Room } from "@/pages/Index";
-import { ArrowLeft, Copy, Share2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Screen, User } from "@/types";
+import { ArrowLeft } from "lucide-react";
 
 interface CreateRoomProps {
   user: User | null;
-  onRoomCreated: (room: Room) => void;
+  onRoomCreated: (roomData: {
+    title: string;
+    description?: string;
+    options: string[];
+    maxParticipants?: number;
+  }) => Promise<void>;
   onNavigate: (screen: Screen) => void;
 }
 
@@ -20,123 +23,24 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
-  const [createdRoom, setCreatedRoom] = useState<Room | null>(null);
-  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const generateRoomCode = () => {
-    return Math.random().toString(36).substr(2, 6).toUpperCase();
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !user) return;
+    if (!title.trim() || !user || isSubmitting) return;
 
-    const roomCode = generateRoomCode();
-    const room: Room = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: title.trim(),
-      description: description.trim() || undefined,
-      maxParticipants: maxParticipants ? parseInt(maxParticipants) : undefined,
-      code: roomCode,
-      creator: user.id,
-      participants: [user.name],
-      options: [],
-      votes: {},
-      isVotingActive: false,
-      createdAt: new Date()
-    };
-
-    setCreatedRoom(room);
-  };
-
-  const handleCopyCode = () => {
-    if (createdRoom) {
-      navigator.clipboard.writeText(createdRoom.code);
-      toast({
-        title: "Copied! 📋",
-        description: "Room code copied to clipboard",
+    setIsSubmitting(true);
+    try {
+      await onRoomCreated({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        options: [],
+        maxParticipants: maxParticipants ? parseInt(maxParticipants) : undefined
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const handleCopyLink = () => {
-    if (createdRoom) {
-      const link = `${window.location.origin}?room=${createdRoom.code}`;
-      navigator.clipboard.writeText(link);
-      toast({
-        title: "Link copied! 🔗",
-        description: "Share this link with your friends",
-      });
-    }
-  };
-
-  const handleJoinRoom = () => {
-    if (createdRoom) {
-      onRoomCreated(createdRoom);
-    }
-  };
-
-  if (createdRoom) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-md"
-        >
-          <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
-            <CardHeader className="text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <CardTitle className="text-3xl font-bold text-green-600">
-                Room Created!
-              </CardTitle>
-              <CardDescription className="text-lg">
-                Share the code with your friends to get started
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <Label className="text-lg font-semibold text-gray-700">Room Code</Label>
-                <div className="flex items-center space-x-2 mt-2">
-                  <div className="flex-1 text-center">
-                    <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent tracking-wider">
-                      {createdRoom.code}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopyCode}
-                    className="h-12"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={handleCopyLink}
-                  className="flex-1"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share Link
-                </Button>
-              </div>
-
-              <Button
-                onClick={handleJoinRoom}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-lg h-12 rounded-full"
-              >
-                Enter Room 🚪
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -214,10 +118,10 @@ const CreateRoom = ({ user, onRoomCreated, onNavigate }: CreateRoomProps) => {
             <CardContent>
               <Button
                 type="submit"
-                disabled={!title.trim()}
+                disabled={!title.trim() || isSubmitting}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
-                Create Room 🚀
+                {isSubmitting ? "Creating..." : "Create Room 🚀"}
               </Button>
             </CardContent>
           </form>
