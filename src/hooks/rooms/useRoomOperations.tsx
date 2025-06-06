@@ -112,10 +112,27 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
   };
 
   const joinRoom = async (roomCode: string, displayName: string) => {
+    console.log('Join room called with:', { roomCode, displayName, userId });
+    
     if (!userId) {
+      console.error('No userId provided for room joining');
       toast({
         title: "Authentication required",
         description: "Please log in to join a room",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    // Check current auth session
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Current auth session:', session?.user?.id);
+
+    if (!session) {
+      console.error('No active session found');
+      toast({
+        title: "Session expired",
+        description: "Please log in again to join a room",
         variant: "destructive"
       });
       return null;
@@ -215,6 +232,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           console.error('Error joining room:', joinError);
           throw joinError;
         }
+        console.log('Successfully added user as participant');
       } else {
         console.log('User already in room, updating display name');
         // Update display name if user is already in room

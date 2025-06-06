@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Screen, User, Room } from "@/types";
-import { Plus, Clock, Users, Trophy, ArrowLeft } from "lucide-react";
+import { Plus, Clock, Users, Trophy, ArrowLeft, Share2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
   user: User | null;
@@ -12,6 +13,7 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
+  const { toast } = useToast();
   const recentRooms = rooms.filter(room => room.resolved_at).slice(0, 3);
 
   const containerVariants = {
@@ -34,6 +36,41 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
     if (!room.final_option_id || !room.options) return 'Unknown';
     const finalOption = room.options.find(opt => opt.id === room.final_option_id);
     return finalOption?.text || 'Unknown';
+  };
+
+  const handleShareRoom = async (room: Room) => {
+    const roomLink = `${window.location.origin}?room=${room.code}`;
+    const shareData = {
+      title: `Join my DiceyDecisions room: ${room.title}`,
+      text: `Help me decide! Join my room "${room.title}" to vote on our options.`,
+      url: roomLink
+    };
+
+    if (navigator.share && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        toast({
+          title: "Room shared! 🎉",
+          description: "Invitation sent successfully",
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          // Fallback to copying link
+          navigator.clipboard.writeText(roomLink);
+          toast({
+            title: "Room link copied! 🔗",
+            description: "Share this link for easy room access",
+          });
+        }
+      }
+    } else {
+      // Fallback to copying link
+      navigator.clipboard.writeText(roomLink);
+      toast({
+        title: "Room link copied! 🔗",
+        description: "Share this link for easy room access",
+      });
+    }
   };
 
   return (
@@ -154,9 +191,23 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
                             )}
                           </div>
                         </div>
-                        <div className="text-2xl">
-                          {(room.room_participants?.length || 0) > 5 ? '🎊' : 
-                           (room.room_participants?.length || 0) > 3 ? '🎉' : '✨'}
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleShareRoom(room);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Share2 className="w-4 h-4" />
+                            Share
+                          </Button>
+                          <div className="text-2xl">
+                            {(room.room_participants?.length || 0) > 5 ? '🎊' : 
+                             (room.room_participants?.length || 0) > 3 ? '🎉' : '✨'}
+                          </div>
                         </div>
                       </div>
                     </CardContent>
