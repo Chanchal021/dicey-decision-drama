@@ -1,9 +1,8 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Screen, User, Room } from "@/types";
-import { Plus, Clock, Users, Trophy, ArrowLeft, Share2 } from "lucide-react";
+import { Plus, Clock, Users, Trophy, ArrowLeft, Share2, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
@@ -31,7 +30,6 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
     visible: { y: 0, opacity: 1 }
   };
 
-  // Helper function to get the final choice text
   const getFinalChoice = (room: Room) => {
     if (!room.final_option_id || !room.options) return 'Unknown';
     const finalOption = room.options.find(opt => opt.id === room.final_option_id);
@@ -40,35 +38,19 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
 
   const handleShareRoom = async (room: Room) => {
     const roomLink = `${window.location.origin}?room=${room.code}`;
-    const shareData = {
-      title: `Join my DiceyDecisions room: ${room.title}`,
-      text: `Help me decide! Join my room "${room.title}" to vote on our options.`,
-      url: roomLink
-    };
-
-    if (navigator.share && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-        toast({
-          title: "Room shared! 🎉",
-          description: "Invitation sent successfully",
-        });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          // Fallback to copying link
-          navigator.clipboard.writeText(roomLink);
-          toast({
-            title: "Room link copied! 🔗",
-            description: "Share this link for easy room access",
-          });
-        }
-      }
-    } else {
-      // Fallback to copying link
-      navigator.clipboard.writeText(roomLink);
+    
+    try {
+      await navigator.clipboard.writeText(roomLink);
       toast({
         title: "Room link copied! 🔗",
-        description: "Share this link for easy room access",
+        description: `Share this link: ${roomLink}`,
+      });
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast({
+        title: "Copy failed",
+        description: "Please manually copy the room code: " + room.code,
+        variant: "destructive"
       });
     }
   };
@@ -79,71 +61,139 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-4xl mx-auto"
+        className="max-w-6xl mx-auto"
       >
-        {/* Back Button */}
-        <motion.div variants={itemVariants} className="mb-4">
+        {/* Header */}
+        <motion.div variants={itemVariants} className="mb-8">
           <Button
             variant="ghost"
             onClick={() => onNavigate("landing")}
-            className="flex items-center gap-2 text-white/80 hover:text-white hover:bg-white/10"
+            className="mb-4 text-white hover:text-white/80 hover:bg-white/10"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Button>
+          
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
+              Welcome back! 👋
+            </h1>
+            <p className="text-xl text-white/80">
+              Ready to make some decisions?
+            </p>
+          </div>
         </motion.div>
 
-        {/* Header */}
-        <motion.div variants={itemVariants} className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
-            Hey {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'there'}! 👋
-          </h1>
-          <p className="text-xl text-white/80">
-            Ready to make some decisions? Let's get this party started! 🎉
-          </p>
-        </motion.div>
-
-        {/* Action Cards */}
-        <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 cursor-pointer group"
+        {/* Quick Actions */}
+        <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-4 mb-12">
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all cursor-pointer group"
                 onClick={() => onNavigate("create-room")}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Plus className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl text-green-600">Create New Room</CardTitle>
-              <CardDescription className="text-lg">
-                Start a new decision session with your friends! 🎲
-              </CardDescription>
-            </CardHeader>
+            <CardContent className="p-8 text-center">
+              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🎲</div>
+              <h3 className="text-2xl font-bold text-purple-600 mb-2">Create New Room</h3>
+              <p className="text-gray-600">Start a new decision session</p>
+            </CardContent>
           </Card>
 
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 cursor-pointer group"
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all cursor-pointer group"
                 onClick={() => onNavigate("join-room")}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl text-purple-600">Join Room</CardTitle>
-              <CardDescription className="text-lg">
-                Got a room code? Jump in and start voting! 🗳️
-              </CardDescription>
-            </CardHeader>
+            <CardContent className="p-8 text-center">
+              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🚪</div>
+              <h3 className="text-2xl font-bold text-pink-600 mb-2">Join Room</h3>
+              <p className="text-gray-600">Enter a room code to join</p>
+            </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Active Rooms */}
+        <motion.div variants={itemVariants} className="mb-12">
+          <h2 className="text-3xl font-bold text-white mb-6">Active Rooms</h2>
+          {rooms.filter(room => !room.resolved_at).length === 0 ? (
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl">
+              <CardContent className="text-center py-12">
+                <div className="text-6xl mb-4">🎯</div>
+                <h3 className="text-2xl font-bold text-gray-600 mb-2">No active rooms</h3>
+                <p className="text-gray-500 mb-6">Create a new room to get started!</p>
+                <Button
+                  onClick={() => onNavigate("create-room")}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg px-6 py-3 rounded-full"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Create Your First Room
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rooms.filter(room => !room.resolved_at).map(room => (
+                <motion.div
+                  key={room.id}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02 }}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    // Navigate to room lobby or appropriate screen based on room state
+                    onNavigate("room-lobby");
+                  }}
+                >
+                  <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg font-bold text-gray-800 mb-1">
+                            {room.title}
+                          </CardTitle>
+                          <CardDescription className="text-gray-600">
+                            Code: {room.code}
+                          </CardDescription>
+                          {room.description && (
+                            <CardDescription className="text-gray-500 mt-1">
+                              {room.description}
+                            </CardDescription>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareRoom(room);
+                          }}
+                          className="flex items-center gap-1"
+                        >
+                          <Copy className="w-3 h-3" />
+                          Copy Link
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <Users className="w-4 h-4" />
+                          <span>{room.room_participants?.length || 0} participants</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{new Date(room.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
 
         {/* Recent Decisions */}
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-white flex items-center">
-              <Clock className="w-8 h-8 mr-3" />
-              Recent Decisions
-            </h2>
+            <h2 className="text-3xl font-bold text-white">Recent Decisions</h2>
             {recentRooms.length > 0 && (
               <Button
-                variant="outline"
+                variant="ghost"
                 onClick={() => onNavigate("past-decisions")}
-                className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                className="text-white hover:text-white/80 hover:bg-white/10"
               >
                 View All
               </Button>
@@ -153,40 +203,36 @@ const Dashboard = ({ user, rooms, onNavigate }: DashboardProps) => {
           {recentRooms.length === 0 ? (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl">
               <CardContent className="text-center py-12">
-                <div className="text-6xl mb-4">🤔</div>
-                <h3 className="text-2xl font-bold text-gray-600 mb-2">No decisions yet!</h3>
-                <p className="text-gray-500 text-lg">
-                  Create your first room and start making some group decisions!
-                </p>
+                <div className="text-6xl mb-4">📚</div>
+                <h3 className="text-2xl font-bold text-gray-600 mb-2">No decisions yet</h3>
+                <p className="text-gray-500">Your completed decisions will appear here</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4">
-              {recentRooms.map((room, index) => (
+            <div className="grid md:grid-cols-3 gap-4">
+              {recentRooms.map(room => (
                 <motion.div
                   key={room.id}
                   variants={itemVariants}
-                  custom={index}
                   whileHover={{ scale: 1.02 }}
                   className="cursor-pointer"
+                  onClick={() => onNavigate("past-decisions")}
                 >
                   <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-800 mb-1">{room.title}</h3>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <span className="flex items-center">
-                              <Trophy className="w-4 h-4 mr-1 text-yellow-500" />
-                              {getFinalChoice(room)}
-                            </span>
-                            <span>{new Date(room.resolved_at || '').toLocaleDateString()}</span>
+                          <h4 className="font-bold text-gray-800 mb-1">{room.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2">
+                            <Trophy className="w-4 h-4 inline mr-1" />
+                            Winner: {getFinalChoice(room)}
+                          </p>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {new Date(room.resolved_at || '').toLocaleDateString()}
                             {room.tiebreaker_used && (
-                              <span className="flex items-center bg-gradient-to-r from-purple-100 to-pink-100 px-2 py-1 rounded-full">
-                                {room.tiebreaker_used === 'dice' && '🎲'}
-                                {room.tiebreaker_used === 'coin' && '🪙'}
-                                {room.tiebreaker_used === 'spinner' && '🎡'}
-                                Tiebreaker
+                              <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                                🎲 Tiebreaker
                               </span>
                             )}
                           </div>
