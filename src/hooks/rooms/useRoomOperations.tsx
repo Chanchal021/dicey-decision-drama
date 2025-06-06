@@ -17,14 +17,29 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
-      // Create the room
+      // Generate a room code using the database function
+      const { data: codeData, error: codeError } = await supabase
+        .rpc('generate_room_code');
+
+      if (codeError || !codeData) {
+        console.error('Error generating room code:', codeError);
+        toast({
+          title: "Failed to generate room code",
+          description: codeError?.message || "Unable to generate room code",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Create the room with the generated code
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .insert({
           title: roomData.title,
           description: roomData.description,
           creator_id: userId,
-          max_participants: roomData.maxParticipants
+          max_participants: roomData.maxParticipants,
+          code: codeData
         })
         .select()
         .single();
