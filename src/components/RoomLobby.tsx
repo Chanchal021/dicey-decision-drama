@@ -6,6 +6,7 @@ import ParticipantsList from "@/components/room/ParticipantsList";
 import DecisionOptions from "@/components/room/DecisionOptions";
 import VotingStatus from "@/components/room/VotingStatus";
 import { useRoomRealtime } from "@/hooks/useRoomRealtime";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface RoomLobbyProps {
   room: Room | null;
@@ -21,7 +22,40 @@ const RoomLobby = ({ room, user, onRoomUpdated, onNavigate }: RoomLobbyProps) =>
     onRoomUpdate: onRoomUpdated
   });
 
-  if (!room || !user) return null;
+  // Show loading state if data is missing
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-red-600 mb-2">Authentication Required</h2>
+            <p className="text-gray-600">Please log in to access this room.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!room) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">🔍</div>
+            <h2 className="text-2xl font-bold text-gray-600 mb-2">Room Not Found</h2>
+            <p className="text-gray-600 mb-4">The room you're looking for doesn't exist or you don't have access to it.</p>
+            <button
+              onClick={() => onNavigate("dashboard")}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-6 py-2 rounded-full"
+            >
+              Back to Dashboard
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4">
