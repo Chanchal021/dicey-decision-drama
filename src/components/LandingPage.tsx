@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Screen } from "@/pages/Index";
+import { Screen } from "@/types";
 
 interface LandingPageProps {
   onNavigate: (screen: Screen) => void;
