@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Screen, User, Room } from "@/types";
-import { Trophy, RotateCcw, Home } from "lucide-react";
+import { Trophy, Home } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResultsScreenProps {
   room: Room | null;
@@ -18,43 +20,103 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
   const [showTiebreaker, setShowTiebreaker] = useState(false);
   const [tiebreakerResult, setTiebreakerResult] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [voteResults, setVoteResults] = useState<Record<string, number>>({});
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!room) return;
+    
+    // Calculate vote results
+    const results = room.options.reduce((acc, option) => {
+      const voteCount = (room.votes || []).filter(vote => vote.option === option).length;
+      acc[option] = voteCount;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    setVoteResults(results);
+  }, [room]);
 
   if (!room || !user) return null;
-
-  // Calculate vote results with proper typing
-  const voteResults = room.options.reduce((acc, option) => {
-    const voteCount = (room.votes || []).filter(vote => vote.option === option).length;
-    acc[option] = voteCount;
-    return acc;
-  }, {} as Record<string, number>);
 
   const sortedResults = Object.entries(voteResults).sort(([,a], [,b]) => b - a);
   const maxVotes = Math.max(...Object.values(voteResults));
   const winners = sortedResults.filter(([,votes]) => votes === maxVotes);
   const hasTie = winners.length > 1;
-  const totalVotes = (room.votes || []).length;
+  const totalVotes = Object.values(voteResults).reduce((sum, votes) => sum + votes, 0);
 
-  const handleTiebreaker = (method: "dice" | "spinner" | "coin") => {
+  const handleTiebreaker = async (method: "dice" | "spinner" | "coin") => {
     setIsAnimating(true);
     setShowTiebreaker(true);
 
     // Simulate tiebreaker animation
-    setTimeout(() => {
+    setTimeout(async () => {
       const randomWinner = winners[Math.floor(Math.random() * winners.length)][0];
       setTiebreakerResult(randomWinner);
       
-      const updatedRoom = {
-        ...room,
-        final_choice: randomWinner,
-        tiebreaker_used: method,
-        resolved_at: new Date().toISOString()
-      };
+      try {
+        const { error } = await supabase
+          .from('rooms')
+          .update({
+            final_choice: randomWinner,
+            tiebreaker_used: method,
+            resolved_at: new Date().toISOString()
+          })
+          .eq('id', room.id);
+
+        if (error) {
+          console.error('Error updating room:', error);
+          toast({
+            title: "Error saving result",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error updating room:', error);
+      }
 
       setTimeout(() => {
         setIsAnimating(false);
+        const updatedRoom = {
+          ...room,
+          final_choice: randomWinner,
+          tiebreaker_used: method,
+          resolved_at: new Date().toISOString()
+        };
         onComplete(updatedRoom);
       }, 2000);
     }, 3000);
+  };
+
+  const handleFinish = async (winner: string) => {
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .update({
+          final_choice: winner,
+          resolved_at: new Date().toISOString()
+        })
+        .eq('id', room.id);
+
+      if (error) {
+        console.error('Error updating room:', error);
+        toast({
+          title: "Error saving result",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const updatedRoom = {
+        ...room,
+        final_choice: winner,
+        resolved_at: new Date().toISOString()
+      };
+      onComplete(updatedRoom);
+    } catch (error) {
+      console.error('Error updating room:', error);
+    }
   };
 
   const TiebreakerAnimation = ({ method }: { method: "dice" | "spinner" | "coin" }) => {
@@ -110,7 +172,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
               <h2 className="text-4xl font-bold text-purple-600 mb-8">
                 🎭 Tiebreaker Time! 🎭
               </h2>
-              <TiebreakerAnimation method={room.tiebreaker_used!} />
+              <TiebreakerAnimation method={room.tiebreaker_used as "dice" | "spinner" | "coin"} />
               <p className="text-xl text-gray-600 mt-8">
                 Let fate decide...
               </p>
@@ -247,14 +309,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
                   {winners[0][0]}
                 </div>
                 <Button
-                  onClick={() => {
-                    const updatedRoom = {
-                      ...room,
-                      final_choice: winners[0][0],
-                      resolved_at: new Date().toISOString()
-                    };
-                    onComplete(updatedRoom);
-                  }}
+                  onClick={() => handleFinish(winners[0][0])}
                   className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-xl px-8 py-4 rounded-full"
                 >
                   <Home className="w-6 h-6 mr-2" />

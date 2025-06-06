@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Screen, User, Room } from "@/types";
 import { Check, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VotingScreenProps {
   room: Room | null;
@@ -18,42 +19,72 @@ interface VotingScreenProps {
 const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   if (!room || !user) return null;
 
-  const userHasVoted = room.votes?.some(vote => vote.id === user.id) || false;
+  // Check if user has already voted
+  useEffect(() => {
+    const userHasVoted = room.votes?.some(vote => vote.user_id === user.id) || false;
+    setHasVoted(userHasVoted);
+  }, [room.votes, user.id]);
+
   const totalVotes = room.votes?.length || 0;
+  const totalParticipants = room.participants?.length || 0;
   const shuffledOptions = [...room.options].sort(() => Math.random() - 0.5);
 
   const handleVote = (option: string) => {
-    if (userHasVoted || hasVoted) return;
-    
+    if (hasVoted || isSubmitting) return;
     setSelectedOption(option);
   };
 
-  const handleSubmitVote = () => {
-    if (!selectedOption || userHasVoted || hasVoted) return;
+  const handleSubmitVote = async () => {
+    if (!selectedOption || hasVoted || isSubmitting || !user) return;
 
-    const updatedRoom = {
-      ...room,
-      votes: {
-        ...room.votes,
-        [user.id]: selectedOption
-      }
-    };
-
-    setHasVoted(true);
+    setIsSubmitting(true);
     
-    toast({
-      title: "Vote submitted! 🗳️",
-      description: `You voted for: ${selectedOption}`,
-    });
+    try {
+      const { error } = await supabase
+        .from('votes')
+        .insert({
+          room_id: room.id,
+          user_id: user.id,
+          option: selectedOption
+        });
 
-    // Simulate waiting for all votes or end voting
-    setTimeout(() => {
-      onVoteSubmitted(updatedRoom);
-    }, 1500);
+      if (error) {
+        toast({
+          title: "Failed to submit vote",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setHasVoted(true);
+      
+      toast({
+        title: "Vote submitted! 🗳️",
+        description: `You voted for: ${selectedOption}`,
+      });
+
+      // Check if all votes are in
+      if (totalVotes + 1 >= totalParticipants) {
+        setTimeout(() => {
+          onVoteSubmitted(room);
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('Error submitting vote:', error);
+      toast({
+        title: "Failed to submit vote",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const containerVariants = {
@@ -96,10 +127,10 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
                 Vote Submitted!
               </h2>
               <p className="text-lg text-gray-600 mb-4">
-                You voted for: <strong>{selectedOption}</strong>
+                Waiting for other participants...
               </p>
               <p className="text-gray-500">
-                Waiting for results...
+                {totalVotes} / {totalParticipants} votes received
               </p>
             </CardContent>
           </Card>
@@ -126,7 +157,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
             <div className="flex items-center justify-center space-x-4">
               <Badge variant="secondary" className="text-lg px-3 py-1">
                 <Users className="w-4 h-4 mr-1" />
-                {totalVotes} / {room.participants.length} voted
+                {totalVotes} / {totalParticipants} voted
               </Badge>
               <Badge variant="outline" className="text-lg px-3 py-1">
                 <Clock className="w-4 h-4 mr-1" />
@@ -150,7 +181,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
               whileHover="hover"
               whileTap={{ scale: 0.95 }}
               className="cursor-pointer"
-              onClick={() => !userHasVoted && handleVote(option)}
+              onClick={() => handleVote(option)}
             >
               <Card className={`
                 transition-all duration-300 border-2
@@ -158,7 +189,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
                   ? 'border-purple-500 bg-purple-50/90 shadow-lg' 
                   : 'border-gray-200 bg-white/90 hover:border-purple-300 hover:shadow-lg'
                 }
-                ${userHasVoted ? 'opacity-50 cursor-not-allowed' : ''}
+                ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
               `}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -187,7 +218,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
         </motion.div>
 
         {/* Submit Vote Button */}
-        {selectedOption && !userHasVoted && (
+        {selectedOption && !hasVoted && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -195,24 +226,12 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
           >
             <Button
               onClick={handleSubmitVote}
+              disabled={isSubmitting}
               className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-xl px-8 py-4 rounded-full"
             >
-              Submit Vote ✅
+              {isSubmitting ? "Submitting..." : "Submit Vote ✅"}
             </Button>
           </motion.div>
-        )}
-
-        {userHasVoted && (
-          <div className="text-center">
-            <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0">
-              <CardContent className="py-6">
-                <div className="text-4xl mb-2">✅</div>
-                <p className="text-lg text-gray-600">
-                  You already voted! Waiting for others...
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         )}
       </motion.div>
     </div>

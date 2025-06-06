@@ -18,11 +18,13 @@ export interface Room {
   resolved_at?: string;
   participants?: Array<{
     id: string;
+    user_id: string;
     display_name: string;
     joined_at: string;
   }>;
   votes?: Array<{
     id: string;
+    user_id: string;
     option: string;
     voted_at: string;
   }>;
@@ -41,21 +43,42 @@ export const useRooms = (userId?: string) => {
     }
 
     try {
+      // Fetch rooms where user is either creator or participant
+      const { data: participantRooms, error: participantError } = await supabase
+        .from('participants')
+        .select('room_id')
+        .eq('user_id', userId);
+
+      if (participantError) {
+        console.error('Error fetching participant rooms:', participantError);
+        toast({
+          title: "Error loading rooms",
+          description: participantError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const roomIds = participantRooms?.map(p => p.room_id) || [];
+
       const { data, error } = await supabase
         .from('rooms')
         .select(`
           *,
           participants (
             id,
+            user_id,
             display_name,
             joined_at
           ),
           votes (
             id,
+            user_id,
             option,
             voted_at
           )
         `)
+        .in('id', roomIds)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -118,13 +141,20 @@ export const useRooms = (userId?: string) => {
         throw roomError;
       }
 
+      // Get user profile for display name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', userId)
+        .single();
+
       // Add creator as participant
       const { error: participantError } = await supabase
         .from('participants')
         .insert({
           room_id: room.id,
           user_id: userId,
-          display_name: 'You' // Will be updated with actual display name
+          display_name: profile?.display_name || 'You'
         });
 
       if (participantError) {
