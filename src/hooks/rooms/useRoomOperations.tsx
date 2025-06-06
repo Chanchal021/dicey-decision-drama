@@ -94,7 +94,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
-      // Find room by code - specify the table name to avoid ambiguity
+      // Find room by code - explicitly specify the table alias to avoid ambiguity
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('*')
