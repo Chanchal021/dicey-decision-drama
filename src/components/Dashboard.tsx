@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +57,12 @@ const Dashboard = ({ user, rooms, onNavigate, onNavigateToRoom }: DashboardProps
     }
   };
 
+  const handleBackToHome = () => {
+    // Clear any current room state when going back to landing
+    localStorage.removeItem('diceyDecisions_currentRoomId');
+    onNavigate("landing");
+  };
+
   return (
     <div className="min-h-screen p-4">
       <motion.div
@@ -68,7 +75,7 @@ const Dashboard = ({ user, rooms, onNavigate, onNavigateToRoom }: DashboardProps
         <motion.div variants={itemVariants} className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => onNavigate("landing")}
+            onClick={handleBackToHome}
             className="mb-4 text-white hover:text-white/80 hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
