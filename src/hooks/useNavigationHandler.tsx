@@ -13,7 +13,7 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [initialRoomCode, setInitialRoomCode] = useState<string | null>(null);
 
-  const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) : null;
+  const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) || null : null;
 
   // Check for room code in URL parameters
   useEffect(() => {
@@ -69,8 +69,23 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     }
   }, [currentRoom, currentScreen]);
 
-  const handleRoomUpdated = (updatedRoom: any) => {
+  const handleRoomUpdated = (updatedRoom: Room) => {
     console.log('Room updated:', updatedRoom);
+    
+    // Update the room state if it matches current room
+    if (currentRoomId === updatedRoom.id) {
+      const totalVotes = updatedRoom.votes?.length || 0;
+      const totalParticipants = updatedRoom.room_participants?.length || 0;
+      
+      // Auto-navigate based on updated room state
+      if (updatedRoom.resolved_at && currentScreen !== "results") {
+        setCurrentScreen("results");
+      } else if (updatedRoom.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0 && currentScreen !== "results") {
+        setCurrentScreen("results");
+      } else if (updatedRoom.is_voting_active && currentScreen === "room-lobby") {
+        setCurrentScreen("voting");
+      }
+    }
   };
 
   const handleNavigateToRoom = (roomId: string) => {
@@ -78,39 +93,44 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     
     // Validate roomId
     if (!roomId || typeof roomId !== 'string') {
-      console.error('Invalid room ID:', roomId);
+      console.error('Invalid room ID provided:', roomId);
+      setCurrentScreen("dashboard");
       return;
     }
 
-    setCurrentRoomId(roomId);
+    // Find the room in the current rooms list
     const room = rooms.find(r => r.id === roomId);
     
-    if (room) {
-      const totalVotes = room.votes?.length || 0;
-      const totalParticipants = room.room_participants?.length || 0;
-      
-      console.log('Room found, navigating to appropriate screen', {
-        roomId,
-        resolved: room.resolved_at,
-        votingActive: room.is_voting_active,
-        totalVotes,
-        totalParticipants
-      });
-      
-      // Navigate to appropriate screen based on room state
-      if (room.resolved_at) {
-        setCurrentScreen("results");
-      } else if (room.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0) {
-        setCurrentScreen("results");
-      } else if (room.is_voting_active) {
-        setCurrentScreen("voting");
-      } else {
-        setCurrentScreen("room-lobby");
-      }
+    if (!room) {
+      console.error('Room not found in current rooms list:', roomId);
+      // Still set the roomId in case it gets loaded later
+      setCurrentRoomId(roomId);
+      setCurrentScreen("room-lobby");
+      return;
+    }
+
+    console.log('Room found, setting current room and navigating', {
+      roomId,
+      resolved: room.resolved_at,
+      votingActive: room.is_voting_active,
+      totalVotes: room.votes?.length || 0,
+      totalParticipants: room.room_participants?.length || 0
+    });
+
+    setCurrentRoomId(roomId);
+    
+    const totalVotes = room.votes?.length || 0;
+    const totalParticipants = room.room_participants?.length || 0;
+    
+    // Navigate to appropriate screen based on room state
+    if (room.resolved_at) {
+      setCurrentScreen("results");
+    } else if (room.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0) {
+      setCurrentScreen("results");
+    } else if (room.is_voting_active) {
+      setCurrentScreen("voting");
     } else {
-      console.error('Room not found:', roomId);
-      // Handle case where room is not found
-      setCurrentScreen("dashboard");
+      setCurrentScreen("room-lobby");
     }
   };
 

@@ -45,14 +45,29 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
 
   const workingRoom = currentRoom || room;
 
-  if (!workingRoom || !user) {
+  // Early returns for error states
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
           <CardContent className="py-12 text-center">
             <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-red-600 mb-2">Missing Data</h2>
-            <p className="text-gray-600">Room or user information is not available.</p>
+            <h2 className="text-2xl font-bold text-red-600 mb-2">Authentication Required</h2>
+            <p className="text-gray-600">Please log in to access this room.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!workingRoom) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">🔍</div>
+            <h2 className="text-2xl font-bold text-gray-600 mb-2">Room Not Found</h2>
+            <p className="text-gray-600">Unable to load room information.</p>
           </CardContent>
         </Card>
       </div>
@@ -90,6 +105,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
         });
 
       if (error) {
+        console.error('Vote submission error:', error);
         toast({
           title: "Failed to submit vote",
           description: error.message,
