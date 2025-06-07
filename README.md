@@ -1,73 +1,52 @@
-# Welcome to your Lovable project
+🎲 Dicey Decisions
+Dicey Decisions is a collaborative real-time decision-making app where users can create “rooms”, add participants, and vote on different options. Built with React, Supabase, ShadCN UI, and TypeScript, this app is designed for quick, democratic decisions among friends, teams, or communities.
 
-## Project info
+🚀 Features
+✅ Room-based decision system
 
-**URL**: https://lovable.dev/projects/b644272b-513a-400b-8ab4-52fc1756fc10
+👥 Invite & manage participants
 
-## How can I edit this code?
+🔄 Realtime updates using Supabase Realtime
 
-There are several ways of editing your application.
+🗳️ Voting mechanism for multiple options
 
-**Use Lovable**
+🧩 Modern UI with ShadCN and Tailwind CSS
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b644272b-513a-400b-8ab4-52fc1756fc10) and start prompting.
+⚡ Built with Vite for blazing-fast development
 
-Changes made via Lovable will be committed automatically to this repo.
+📦 Tech Stack
+Frontend: React, TypeScript, ShadCN UI, Tailwind CSS, Vite
 
-**Use your preferred IDE**
+Backend: Supabase (PostgreSQL, Realtime, Auth)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+State Management: React Hooks
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Deployment: Vercel / Netlify (Recommended)
 
-Follow these steps:
+📁 Project Structure
+bash
+Copy
+Edit
+src/
+├── components/       # Reusable UI components
+├── hooks/            # Custom React hooks (e.g., useRoomsRealtime)
+├── pages/            # Main pages/views
+├── integrations/     # Supabase client setup
+├── types/            # TypeScript types/interfaces
+├── App.tsx           # App entry point
+└── main.tsx          # React + Vite bootstrap
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Improvements
+Authentication with Supabase Auth
 
-# Step 3: Install the necessary dependencies.
-npm i
+Poll deadlines and reminders
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Mobile responsiveness
 
-**Edit a file directly in GitHub**
+Admin controls (kick, reset votes, etc.)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Result charts/visualizations
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/b644272b-513a-400b-8ab4-52fc1756fc10) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+🙌 Contributions
+Feel free to fork, clone, and submit PRs. For major changes, open an issue to discuss what you’d like to change.
