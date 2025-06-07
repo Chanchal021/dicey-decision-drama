@@ -1,10 +1,10 @@
 
-import { Room } from "@/types";
+import { Room, Screen } from "@/types";
 
 interface UseRoomNavigationProps {
   rooms: Room[];
   setCurrentRoomId: (roomId: string | null) => void;
-  setCurrentScreen: (screen: string) => void;
+  setCurrentScreen: (screen: Screen) => void;
   setAllowAutoNavigation: (allow: boolean) => void;
 }
 
