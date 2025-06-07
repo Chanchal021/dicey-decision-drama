@@ -24,7 +24,7 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
   const [currentRoom, setCurrentRoom] = useState<Room | null>(room);
   const { toast } = useToast();
 
-  // Set up real-time updates for this room
+  // Set up real-time updates for this room - MUST be called unconditionally
   useRoomRealtime({
     roomId: room?.id || null,
     onRoomUpdate: (updatedRoom) => {
@@ -45,7 +45,15 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
 
   const workingRoom = currentRoom || room;
 
-  // Early returns for error states
+  // Check if user has already voted - MUST be called unconditionally
+  useEffect(() => {
+    if (workingRoom && user) {
+      const userHasVoted = workingRoom.votes?.some(vote => vote.user_id === user.id) || false;
+      setHasVoted(userHasVoted);
+    }
+  }, [workingRoom?.votes, user?.id, workingRoom, user]);
+
+  // Handle early returns AFTER all hooks have been called
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -73,12 +81,6 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
       </div>
     );
   }
-
-  // Check if user has already voted
-  useEffect(() => {
-    const userHasVoted = workingRoom.votes?.some(vote => vote.user_id === user.id) || false;
-    setHasVoted(userHasVoted);
-  }, [workingRoom.votes, user.id]);
 
   const totalVotes = workingRoom.votes?.length || 0;
   const totalParticipants = workingRoom.room_participants?.length || 0;
