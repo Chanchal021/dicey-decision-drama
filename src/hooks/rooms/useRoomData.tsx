@@ -7,16 +7,19 @@ import { Room } from './types';
 export const useRoomData = (userId?: string) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchRooms = async () => {
     if (!userId) {
       setRooms([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
     try {
+      setError(null);
       // Fetch rooms where user is either creator or participant
       const { data: participantRooms, error: participantError } = await supabase
         .from('room_participants')
@@ -25,9 +28,11 @@ export const useRoomData = (userId?: string) => {
 
       if (participantError) {
         console.error('Error fetching participant rooms:', participantError);
+        const errorMessage = participantError.message;
+        setError(errorMessage);
         toast({
           title: "Error loading rooms",
-          description: participantError.message,
+          description: errorMessage,
           variant: "destructive"
         });
         return;
@@ -69,9 +74,11 @@ export const useRoomData = (userId?: string) => {
 
       if (error) {
         console.error('Error fetching rooms:', error);
+        const errorMessage = error.message;
+        setError(errorMessage);
         toast({
           title: "Error loading rooms",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive"
         });
         return;
@@ -88,6 +95,8 @@ export const useRoomData = (userId?: string) => {
       setRooms(formattedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,6 +109,7 @@ export const useRoomData = (userId?: string) => {
   return {
     rooms,
     loading,
+    error,
     fetchRooms
   };
 };
