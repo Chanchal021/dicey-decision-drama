@@ -38,13 +38,67 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
 
   if (!room || !user) return null;
 
+  // Defensive checks for room data
+  if (!room.options || room.options.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-orange-600 mb-2">No Options Available</h2>
+            <p className="text-gray-600 mb-4">This room doesn't have any voting options yet.</p>
+            <Button
+              onClick={() => onNavigate("dashboard")}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-6 py-2 rounded-full"
+            >
+              <Home className="w-6 h-6 mr-2" />
+              Back to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const sortedResults = Object.entries(voteResults).sort(([,a], [,b]) => b - a);
+  
+  // Additional safety checks
+  if (sortedResults.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">📊</div>
+            <h2 className="text-2xl font-bold text-blue-600 mb-2">Processing Results</h2>
+            <p className="text-gray-600 mb-4">Loading voting results...</p>
+            <Button
+              onClick={() => onNavigate("dashboard")}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-6 py-2 rounded-full"
+            >
+              <Home className="w-6 h-6 mr-2" />
+              Back to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const maxVotes = Math.max(...Object.values(voteResults));
   const winners = sortedResults.filter(([,votes]) => votes === maxVotes);
   const hasTie = winners.length > 1;
   const totalVotes = Object.values(voteResults).reduce((sum, votes) => sum + votes, 0);
 
   const handleTiebreaker = async (method: "dice" | "spinner" | "coin") => {
+    if (winners.length === 0) {
+      toast({
+        title: "Error",
+        description: "No winners found for tiebreaker",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsAnimating(true);
     setShowTiebreaker(true);
 
@@ -290,7 +344,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
         </div>
 
         {/* Winner or Tiebreaker */}
-        {!hasTie ? (
+        {!hasTie && winners.length > 0 ? (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -324,7 +378,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
               </CardContent>
             </Card>
           </motion.div>
-        ) : (
+        ) : hasTie && winners.length > 0 ? (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -366,6 +420,27 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
                     Coin Flip
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center"
+          >
+            <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+              <CardContent className="py-12">
+                <div className="text-4xl mb-4">🤔</div>
+                <h2 className="text-2xl font-bold text-gray-600 mb-2">No Results Yet</h2>
+                <p className="text-gray-600 mb-4">There are no votes to display results for.</p>
+                <Button
+                  onClick={() => onNavigate("dashboard")}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-6 py-2 rounded-full"
+                >
+                  <Home className="w-6 h-6 mr-2" />
+                  Back to Dashboard
+                </Button>
               </CardContent>
             </Card>
           </motion.div>
