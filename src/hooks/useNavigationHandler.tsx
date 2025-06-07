@@ -12,6 +12,7 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
   const [currentScreen, setCurrentScreen] = useState<Screen>("landing");
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [initialRoomCode, setInitialRoomCode] = useState<string | null>(null);
+  const [allowAutoNavigation, setAllowAutoNavigation] = useState(true);
 
   const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) || null : null;
 
@@ -79,9 +80,9 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     }
   }, [user, initialRoomCode, currentScreen, authLoading]);
 
-  // Auto-navigate based on room state when room is selected or updated
+  // Auto-navigate based on room state when room is selected or updated - BUT ONLY if auto-navigation is allowed
   useEffect(() => {
-    if (currentRoom && currentRoomId) {
+    if (currentRoom && currentRoomId && allowAutoNavigation) {
       const totalVotes = currentRoom.votes?.length || 0;
       const totalParticipants = currentRoom.room_participants?.length || 0;
       
@@ -91,7 +92,8 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
         resolved: currentRoom.resolved_at,
         votingActive: currentRoom.is_voting_active,
         totalVotes,
-        totalParticipants
+        totalParticipants,
+        autoNavAllowed: allowAutoNavigation
       });
       
       // If room is resolved, go to results
@@ -115,7 +117,7 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
         setCurrentScreen("room-lobby");
       }
     }
-  }, [currentRoom?.is_voting_active, currentRoom?.resolved_at, currentRoom?.votes?.length, currentRoom?.room_participants?.length, currentRoomId, currentScreen]);
+  }, [currentRoom?.is_voting_active, currentRoom?.resolved_at, currentRoom?.votes?.length, currentRoom?.room_participants?.length, currentRoomId, currentScreen, allowAutoNavigation]);
 
   const handleRoomUpdated = (updatedRoom: Room) => {
     console.log('Room updated in navigation handler:', {
@@ -160,6 +162,7 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     });
 
     setCurrentRoomId(roomId);
+    setAllowAutoNavigation(true); // Enable auto-navigation for room activities
     
     const totalVotes = room.votes?.length || 0;
     const totalParticipants = room.room_participants?.length || 0;
@@ -176,14 +179,26 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     }
   };
 
-  // Enhanced setCurrentScreen to handle back to home
+  // Enhanced setCurrentScreen to handle back to home and disable auto-navigation
   const handleSetCurrentScreen = (screen: Screen) => {
+    console.log('Manual navigation to:', screen, 'from:', currentScreen);
+    
     if (screen === "landing") {
       // Clear room state when going back to landing
       setCurrentRoomId(null);
+      setAllowAutoNavigation(false); // Disable auto-navigation
       localStorage.removeItem('diceyDecisions_currentRoomId');
       localStorage.removeItem('diceyDecisions_currentScreen');
+    } else if (screen === "dashboard") {
+      // Disable auto-navigation when going to dashboard
+      setAllowAutoNavigation(false);
+      setCurrentRoomId(null);
+      localStorage.removeItem('diceyDecisions_currentRoomId');
+    } else if (["create-room", "join-room", "past-decisions"].includes(screen)) {
+      // Disable auto-navigation for non-room screens
+      setAllowAutoNavigation(false);
     }
+    
     setCurrentScreen(screen);
   };
 
@@ -194,6 +209,7 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
       localStorage.removeItem('diceyDecisions_currentRoomId');
       setCurrentRoomId(null);
       setCurrentScreen("landing");
+      setAllowAutoNavigation(true);
     }
   }, [user, authLoading]);
 
