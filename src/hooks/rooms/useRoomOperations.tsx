@@ -197,25 +197,16 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       const normalizedCode = roomCode.toUpperCase().trim();
       console.log('🔄 Normalized room code:', normalizedCode);
 
-      // Step 1: Find the room with detailed debugging
-      console.log('🔍 Searching for room in database...');
-      
-      // First, let's try to get all rooms without filtering to see if RLS is the issue
-      console.log('🔍 Checking all rooms visibility...');
-      const { data: allRoomsCheck, error: allRoomsError } = await supabase
-        .from('rooms')
-        .select('code, title, creator_id, is_open')
-        .limit(10);
-      
-      console.log('All rooms check:', { allRoomsCheck, allRoomsError });
-
+      // Find open rooms by code (this uses the "Users can view open rooms for joining" policy)
+      console.log('🔍 Searching for open room...');
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .select('*')
-        .eq('code', normalizedCode);
+        .eq('code', normalizedCode)
+        .eq('is_open', true);
 
       console.log('📊 Room query details:');
-      console.log('  - Query:', `SELECT * FROM rooms WHERE code = '${normalizedCode}'`);
+      console.log('  - Query: open rooms with code:', normalizedCode);
       console.log('  - Results count:', roomData?.length || 0);
       console.log('  - Room data:', roomData);
       console.log('  - Room error:', roomError);
@@ -231,20 +222,10 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       }
 
       if (!roomData || roomData.length === 0) {
-        console.log('❌ No room found with code:', normalizedCode);
-        console.log('🔍 Let me check what rooms exist...');
-        
-        // Debug: Check what rooms exist
-        const { data: allRooms } = await supabase
-          .from('rooms')
-          .select('code, title')
-          .limit(10);
-        
-        console.log('🏠 Available rooms (first 10):', allRooms);
-        
+        console.log('❌ No open room found with code:', normalizedCode);
         toast({
           title: "Room not found",
-          description: `No room exists with code "${normalizedCode}"`,
+          description: `No open room exists with code "${normalizedCode}"`,
           variant: "destructive"
         });
         return null;
@@ -259,18 +240,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         max_participants: room.max_participants
       });
 
-      // Step 2: Check if room is open
-      if (!room.is_open) {
-        console.log('❌ Room is closed');
-        toast({
-          title: "Room is closed",
-          description: "This room is no longer accepting new participants",
-          variant: "destructive"
-        });
-        return null;
-      }
-
-      // Step 3: Check current participants
+      // Check current participants
       console.log('👥 Checking current participants...');
       const { data: participants, error: participantsError } = await supabase
         .from('room_participants')
@@ -294,7 +264,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       console.log('  - Current participants:', currentParticipants);
       console.log('  - Max participants:', room.max_participants);
 
-      // Step 4: Check capacity
+      // Check capacity
       if (room.max_participants && currentParticipants >= room.max_participants) {
         console.log('❌ Room is at capacity');
         toast({
@@ -305,7 +275,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         return null;
       }
 
-      // Step 5: Check if user is already in room
+      // Check if user is already in room
       const isAlreadyParticipant = participants?.some(p => p.user_id === userId);
       console.log('🔍 User already participant?', isAlreadyParticipant);
 
@@ -318,7 +288,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         return await fetchCompleteRoomData(room.id);
       }
 
-      // Step 6: Add user to room
+      // Add user to room
       console.log('➕ Adding user to room...');
       const { error: joinError } = await supabase
         .from('room_participants')
@@ -370,6 +340,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     console.log('🔄 Fetching complete room data for:', roomId);
     
     try {
+      // Since the user now has access through user_has_room_access function, this should work
       const { data: room, error } = await supabase
         .from('rooms')
         .select(`
