@@ -14,11 +14,12 @@ interface LoginScreenProps {
 
 const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
   const [isSignup, setIsSignup] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, resetPassword, user } = useAuth();
 
   // Redirect to dashboard if user is already logged in
   useEffect(() => {
@@ -32,7 +33,13 @@ const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
     setIsLoading(true);
 
     try {
-      if (isSignup) {
+      if (isForgotPassword) {
+        const { error } = await resetPassword(email);
+        if (!error) {
+          setIsForgotPassword(false);
+          setEmail("");
+        }
+      } else if (isSignup) {
         const { error } = await signUp(email, password, name || email.split('@')[0]);
         if (!error) {
           // User will be redirected after email confirmation
@@ -60,6 +67,22 @@ const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
     }
   };
 
+  const getTitle = () => {
+    if (isForgotPassword) return "Reset Password";
+    return isSignup ? "Create Account" : "Welcome Back";
+  };
+
+  const getDescription = () => {
+    if (isForgotPassword) return "Enter your email to receive a password reset link";
+    return "Make group decisions fun and easy! 🎉";
+  };
+
+  const getButtonText = () => {
+    if (isLoading) return "Loading...";
+    if (isForgotPassword) return "Send Reset Link";
+    return isSignup ? "Sign Up & Start Playing! 🚀" : "Login & Let's Decide! ✨";
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div
@@ -79,12 +102,12 @@ const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
               DiceyDecisions
             </CardTitle>
             <CardDescription className="text-lg">
-              Make group decisions fun and easy! 🎉
+              {getDescription()}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {isSignup && (
+              {isSignup && !isForgotPassword && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -108,14 +131,16 @@ const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
                 className="text-lg h-12"
                 required
               />
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="text-lg h-12"
-                required
-              />
+              {!isForgotPassword && (
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="text-lg h-12"
+                  required
+                />
+              )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-3">
               <Button
@@ -123,17 +148,47 @@ const LoginScreen = ({ onNavigate }: LoginScreenProps) => {
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg h-12 rounded-full"
               >
-                {isLoading ? "Loading..." : (isSignup ? "Sign Up & Start Playing! 🚀" : "Login & Let's Decide! ✨")}
+                {getButtonText()}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsSignup(!isSignup)}
-                className="text-purple-600 hover:text-purple-700"
-                disabled={isLoading}
-              >
-                {isSignup ? "Already have an account? Login" : "New here? Create account"}
-              </Button>
+              
+              {!isForgotPassword && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsSignup(!isSignup)}
+                    className="text-purple-600 hover:text-purple-700"
+                    disabled={isLoading}
+                  >
+                    {isSignup ? "Already have an account? Login" : "New here? Create account"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-gray-500 hover:text-gray-700 text-sm"
+                    disabled={isLoading}
+                  >
+                    Forgot your password?
+                  </Button>
+                </>
+              )}
+              
+              {isForgotPassword && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setEmail("");
+                  }}
+                  className="text-purple-600 hover:text-purple-700"
+                  disabled={isLoading}
+                >
+                  ← Back to Login
+                </Button>
+              )}
+              
               <Button
                 type="button"
                 variant="ghost"
