@@ -15,6 +15,34 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
 
   const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) || null : null;
 
+  // Preserve navigation state in localStorage
+  useEffect(() => {
+    const savedScreen = localStorage.getItem('diceyDecisions_currentScreen') as Screen;
+    const savedRoomId = localStorage.getItem('diceyDecisions_currentRoomId');
+    
+    if (savedScreen && !authLoading) {
+      setCurrentScreen(savedScreen);
+    }
+    if (savedRoomId) {
+      setCurrentRoomId(savedRoomId);
+    }
+  }, [authLoading]);
+
+  // Save current state to localStorage whenever it changes
+  useEffect(() => {
+    if (currentScreen !== "landing") {
+      localStorage.setItem('diceyDecisions_currentScreen', currentScreen);
+    }
+  }, [currentScreen]);
+
+  useEffect(() => {
+    if (currentRoomId) {
+      localStorage.setItem('diceyDecisions_currentRoomId', currentRoomId);
+    } else {
+      localStorage.removeItem('diceyDecisions_currentRoomId');
+    }
+  }, [currentRoomId]);
+
   // Check for room code in URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -133,6 +161,16 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
       setCurrentScreen("room-lobby");
     }
   };
+
+  // Clear saved state when user logs out
+  useEffect(() => {
+    if (!user && !authLoading) {
+      localStorage.removeItem('diceyDecisions_currentScreen');
+      localStorage.removeItem('diceyDecisions_currentRoomId');
+      setCurrentRoomId(null);
+      setCurrentScreen("landing");
+    }
+  }, [user, authLoading]);
 
   return {
     currentScreen,
