@@ -33,19 +33,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('Setting up auth state listener...');
     
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Always set loading to false after any auth state change
         setLoading(false);
+
+        // Handle profile creation after successful signup
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Defer profile creation to avoid blocking the auth flow
+          setTimeout(async () => {
+            await ensureUserProfile(session.user.id);
+          }, 100);
+        }
       }
     );
 
-    // Check for existing session
+    // THEN check for existing session
     const getInitialSession = async () => {
       try {
         console.log('Checking for existing session...');
@@ -62,7 +68,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Error in getInitialSession:', error);
       } finally {
-        setLoading(false);
+        if (!session) {
+          setLoading(false);
+        }
       }
     };
 
@@ -74,9 +82,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  const ensureUserProfile = async (userId: string): Promise<boolean> => {
+    try {
+      console.log('Ensuring user profile exists for:', userId);
+      
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileCheckError) {
+        console.error('Error checking user profile:', profileCheckError);
+        return false;
+      }
+
+      if (!existingProfile) {
+        console.log('User profile does not exist, creating one...');
+        
+        const { data: userData } = await supabase.auth.getUser();
+        const displayName = userData.user?.user_metadata?.display_name || 
+                           userData.user?.email?.split('@')[0] || 
+                           'Anonymous User';
+
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            display_name: displayName
+          });
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          return false;
+        }
+        
+        console.log('User profile created successfully');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Unexpected error managing user profile:', error);
+      return false;
+    }
+  };
+
   const signUp = async (email: string, password: string, displayName: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Attempting signup for:', email);
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -88,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        console.error('Signup error:', error);
         toast({
           title: "Sign up failed",
           description: error.message,
@@ -96,6 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error };
       }
 
+      console.log('Signup successful:', data);
       toast({
         title: "Check your email!",
         description: "We've sent you a confirmation link.",
@@ -109,12 +165,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting signin for:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error('Signin error:', error);
         toast({
           title: "Login failed",
           description: error.message,
@@ -123,6 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error };
       }
 
+      console.log('Signin successful:', data);
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
@@ -136,6 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      console.log('Signing out...');
       await supabase.auth.signOut();
       toast({
         title: "Signed out",
