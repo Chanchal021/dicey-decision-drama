@@ -2,9 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateRoomData, Room } from './types';
+import { useProfileManager } from './useProfileManager';
 
 export const useRoomOperations = (userId?: string, refetchRooms?: () => void) => {
   const { toast } = useToast();
+  const { ensureUserProfile } = useProfileManager();
 
   const createRoom = async (roomData: CreateRoomData): Promise<Room | null> => {
     if (!userId) {
@@ -17,49 +19,10 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
-      // First, ensure the user profile exists
-      console.log('Ensuring user profile exists for:', userId);
-      const { data: existingProfile, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileCheckError) {
-        console.error('Error checking user profile:', profileCheckError);
-        toast({
-          title: "Profile check failed",
-          description: profileCheckError.message,
-          variant: "destructive"
-        });
+      // Ensure the user profile exists
+      const profileReady = await ensureUserProfile(userId);
+      if (!profileReady) {
         return null;
-      }
-
-      if (!existingProfile) {
-        console.log('User profile does not exist, creating one...');
-        // Create user profile if it doesn't exist
-        const { data: userData } = await supabase.auth.getUser();
-        const displayName = userData.user?.user_metadata?.display_name || 
-                           userData.user?.email?.split('@')[0] || 
-                           'Anonymous User';
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            display_name: displayName
-          });
-
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          toast({
-            title: "Failed to create user profile",
-            description: profileError.message,
-            variant: "destructive"
-          });
-          return null;
-        }
-        console.log('User profile created successfully');
       }
 
       // Generate a room code using the database function
@@ -199,49 +162,10 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
-      // First, ensure the user profile exists
-      console.log('Ensuring user profile exists for:', userId);
-      const { data: existingProfile, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileCheckError) {
-        console.error('Error checking user profile:', profileCheckError);
-        toast({
-          title: "Profile check failed",
-          description: profileCheckError.message,
-          variant: "destructive"
-        });
+      // Ensure the user profile exists
+      const profileReady = await ensureUserProfile(userId);
+      if (!profileReady) {
         return null;
-      }
-
-      if (!existingProfile) {
-        console.log('User profile does not exist, creating one...');
-        // Create user profile if it doesn't exist
-        const { data: userData } = await supabase.auth.getUser();
-        const profileDisplayName = userData.user?.user_metadata?.display_name || 
-                                 userData.user?.email?.split('@')[0] || 
-                                 'Anonymous User';
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            display_name: profileDisplayName
-          });
-
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          toast({
-            title: "Failed to create user profile",
-            description: profileError.message,
-            variant: "destructive"
-          });
-          return null;
-        }
-        console.log('User profile created successfully');
       }
 
       const normalizedCode = roomCode.toUpperCase().trim();

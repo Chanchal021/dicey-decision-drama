@@ -45,7 +45,19 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
 
   const workingRoom = currentRoom || room;
 
-  if (!workingRoom || !user) return null;
+  if (!workingRoom || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0">
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-red-600 mb-2">Missing Data</h2>
+            <p className="text-gray-600">Room or user information is not available.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Check if user has already voted
   useEffect(() => {

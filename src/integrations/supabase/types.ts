@@ -33,6 +33,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_options_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_options_submitted_by"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "options_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -92,6 +106,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_room_participants_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_room_participants_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "room_participants_room_id_fkey"
             columns: ["room_id"]
@@ -160,7 +188,21 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_rooms_creator_id"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_rooms_final_option"
+            columns: ["final_option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_rooms_final_option_id"
             columns: ["final_option_id"]
             isOneToOne: false
             referencedRelation: "options"
@@ -201,6 +243,27 @@ export type Database = {
           type?: Database["public"]["Enums"]["tiebreaker_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tiebreakers_result_option_id"
+            columns: ["result_option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tiebreakers_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tiebreakers_triggered_by"
+            columns: ["triggered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tiebreakers_result_option_id_fkey"
             columns: ["result_option_id"]
@@ -247,6 +310,27 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_votes_option_id"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_votes_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_votes_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "votes_option_id_fkey"
             columns: ["option_id"]
