@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Screen, User, Room } from "@/types";
-import { Check, Users, Clock } from "lucide-react";
+import { Check, Users, Clock, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoomRealtime } from "@/hooks/useRoomRealtime";
@@ -160,9 +159,17 @@ const VotingScreen = ({ room, user, onVoteSubmitted, onNavigate }: VotingScreenP
               <p className="text-lg text-gray-600 mb-4">
                 Waiting for other participants...
               </p>
-              <p className="text-gray-500">
+              <p className="text-gray-500 mb-6">
                 {totalVotes} / {totalParticipants} votes received
               </p>
+              <Button
+                onClick={() => onNavigate("dashboard")}
+                variant="outline"
+                className="font-bold px-6 py-2"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Finish & Go Home
+              </Button>
             </CardContent>
           </Card>
         </motion.div>
