@@ -6,7 +6,11 @@ import { useNavigationHandler } from "@/hooks/useNavigationHandler";
 import ScreenRenderer from "@/components/ScreenRenderer";
 
 const Index = () => {
+  console.log('Index component mounting...');
+  
   const { user, loading: authLoading } = useAuth();
+  console.log('Auth state in Index:', { user: user?.id, authLoading });
+  
   const { rooms, loading: roomsLoading, createRoom, joinRoom } = useRooms(user?.id);
   
   const {
@@ -29,6 +33,7 @@ const Index = () => {
 
   // Show loading while auth is initializing
   if (authLoading) {
+    console.log('Showing loading screen - auth loading');
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400 flex items-center justify-center">
         <div className="text-white text-2xl">Loading...</div>
@@ -37,6 +42,7 @@ const Index = () => {
   }
 
   const handleCreateRoom = async (roomData: any) => {
+    console.log('Creating room with data:', roomData);
     const room = await createRoom(roomData);
     if (room) {
       setCurrentRoomId(room.id);
@@ -45,11 +51,22 @@ const Index = () => {
   };
 
   const handleJoinRoom = async (roomCode: string, displayName: string) => {
+    console.log('=== INDEX HANDLE JOIN ROOM START ===');
+    console.log('Room Code:', roomCode);
+    console.log('Display Name:', displayName);
+    console.log('User ID:', user?.id);
+    
     const room = await joinRoom(roomCode, displayName);
+    console.log('Join room result:', room);
+    
     if (room) {
+      console.log('✅ Successfully joined room, navigating to lobby');
       setCurrentRoomId(room.id);
       handleNavigateToRoom(room.id);
+    } else {
+      console.log('❌ Failed to join room');
     }
+    console.log('=== INDEX HANDLE JOIN ROOM END ===');
   };
 
   return (

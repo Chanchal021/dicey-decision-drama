@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateRoomData, Room } from './types';
@@ -116,10 +117,11 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
   };
 
   const joinRoom = async (roomCode: string, displayName: string): Promise<Room | null> => {
-    console.log('=== JOIN ROOM DEBUG START ===');
-    console.log('User ID:', userId);
-    console.log('Room Code:', roomCode);
-    console.log('Display Name:', displayName);
+    console.log('=== JOIN ROOM OPERATION START ===');
+    console.log('🔍 Input parameters:');
+    console.log('  - User ID:', userId);
+    console.log('  - Room Code:', roomCode);
+    console.log('  - Display Name:', displayName);
     
     if (!userId) {
       console.log('❌ JOIN FAILED: No user ID');
@@ -153,16 +155,20 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
     try {
       const normalizedCode = roomCode.toUpperCase().trim();
-      console.log('🔍 Looking for room with code:', normalizedCode);
+      console.log('🔄 Normalized room code:', normalizedCode);
 
-      // Step 1: Find the room
+      // Step 1: Find the room with detailed debugging
+      console.log('🔍 Searching for room in database...');
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .select('*')
-        .eq('code', normalizedCode)
-        .maybeSingle();
+        .eq('code', normalizedCode);
 
-      console.log('Room query result:', { roomData, roomError });
+      console.log('📊 Room query details:');
+      console.log('  - Query:', `SELECT * FROM rooms WHERE code = '${normalizedCode}'`);
+      console.log('  - Results count:', roomData?.length || 0);
+      console.log('  - Room data:', roomData);
+      console.log('  - Room error:', roomError);
 
       if (roomError) {
         console.error('❌ Database error finding room:', roomError);
@@ -174,20 +180,37 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         return null;
       }
 
-      if (!roomData) {
+      if (!roomData || roomData.length === 0) {
         console.log('❌ No room found with code:', normalizedCode);
+        console.log('🔍 Let me check what rooms exist...');
+        
+        // Debug: Check what rooms exist
+        const { data: allRooms } = await supabase
+          .from('rooms')
+          .select('code, title')
+          .limit(10);
+        
+        console.log('🏠 Available rooms (first 10):', allRooms);
+        
         toast({
           title: "Room not found",
-          description: "No room exists with that code",
+          description: `No room exists with code "${normalizedCode}"`,
           variant: "destructive"
         });
         return null;
       }
 
-      console.log('✅ Room found:', roomData);
+      const room = roomData[0];
+      console.log('✅ Room found:', {
+        id: room.id,
+        title: room.title,
+        code: room.code,
+        is_open: room.is_open,
+        max_participants: room.max_participants
+      });
 
       // Step 2: Check if room is open
-      if (!roomData.is_open) {
+      if (!room.is_open) {
         console.log('❌ Room is closed');
         toast({
           title: "Room is closed",
@@ -198,12 +221,13 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       }
 
       // Step 3: Check current participants
+      console.log('👥 Checking current participants...');
       const { data: participants, error: participantsError } = await supabase
         .from('room_participants')
         .select('user_id')
-        .eq('room_id', roomData.id);
+        .eq('room_id', room.id);
 
-      console.log('Participants query result:', { participants, participantsError });
+      console.log('👥 Participants query result:', { participants, participantsError });
 
       if (participantsError) {
         console.error('❌ Error checking participants:', participantsError);
@@ -216,15 +240,16 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       }
 
       const currentParticipants = participants?.length || 0;
-      console.log('Current participants count:', currentParticipants);
-      console.log('Max participants:', roomData.max_participants);
+      console.log('📊 Participant stats:');
+      console.log('  - Current participants:', currentParticipants);
+      console.log('  - Max participants:', room.max_participants);
 
       // Step 4: Check capacity
-      if (roomData.max_participants && currentParticipants >= roomData.max_participants) {
+      if (room.max_participants && currentParticipants >= room.max_participants) {
         console.log('❌ Room is at capacity');
         toast({
           title: "Room is full",
-          description: `This room has reached its maximum capacity of ${roomData.max_participants} participants`,
+          description: `This room has reached its maximum capacity of ${room.max_participants} participants`,
           variant: "destructive"
         });
         return null;
@@ -232,7 +257,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       // Step 5: Check if user is already in room
       const isAlreadyParticipant = participants?.some(p => p.user_id === userId);
-      console.log('User already participant?', isAlreadyParticipant);
+      console.log('🔍 User already participant?', isAlreadyParticipant);
 
       if (isAlreadyParticipant) {
         console.log('ℹ️ User already in room, fetching complete data');
@@ -240,7 +265,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           title: "Already in room",
           description: "You're already a participant in this room",
         });
-        return await fetchCompleteRoomData(roomData.id);
+        return await fetchCompleteRoomData(room.id);
       }
 
       // Step 6: Add user to room
@@ -248,12 +273,12 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       const { error: joinError } = await supabase
         .from('room_participants')
         .insert({
-          room_id: roomData.id,
+          room_id: room.id,
           user_id: userId,
           display_name: displayName.trim()
         });
 
-      console.log('Join result:', { joinError });
+      console.log('📝 Join insertion result:', { joinError });
 
       if (joinError) {
         console.error('❌ Error joining room:', joinError);
@@ -268,15 +293,15 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
       console.log('✅ Successfully joined room!');
       toast({
         title: "Successfully joined room!",
-        description: `Welcome to "${roomData.title}"`,
+        description: `Welcome to "${room.title}"`,
       });
 
       if (refetchRooms) {
         refetchRooms();
       }
 
-      const completeRoom = await fetchCompleteRoomData(roomData.id);
-      console.log('=== JOIN ROOM DEBUG END ===');
+      const completeRoom = await fetchCompleteRoomData(room.id);
+      console.log('=== JOIN ROOM OPERATION END ===');
       return completeRoom;
 
     } catch (error) {
@@ -321,7 +346,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .eq('id', roomId)
         .single();
 
-      console.log('Complete room data result:', { room, error });
+      console.log('📊 Complete room data result:', { room, error });
 
       if (error) {
         console.error('❌ Error fetching complete room data:', error);
