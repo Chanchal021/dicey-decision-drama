@@ -76,44 +76,55 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     }
   }, [user, initialRoomCode, currentScreen, authLoading]);
 
-  // Auto-navigate based on room state when room is selected
+  // Auto-navigate based on room state when room is selected or updated
   useEffect(() => {
-    if (currentRoom && currentScreen === "room-lobby") {
+    if (currentRoom && currentRoomId) {
       const totalVotes = currentRoom.votes?.length || 0;
       const totalParticipants = currentRoom.room_participants?.length || 0;
       
+      console.log('Room state changed:', {
+        roomId: currentRoom.id,
+        currentScreen,
+        resolved: currentRoom.resolved_at,
+        votingActive: currentRoom.is_voting_active,
+        totalVotes,
+        totalParticipants
+      });
+      
       // If room is resolved, go to results
-      if (currentRoom.resolved_at) {
+      if (currentRoom.resolved_at && currentScreen !== "results") {
+        console.log('Room resolved, navigating to results');
         setCurrentScreen("results");
       }
       // If voting is active and all votes are in, go to results
-      else if (currentRoom.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0) {
+      else if (currentRoom.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0 && currentScreen !== "results") {
+        console.log('All votes collected, navigating to results');
         setCurrentScreen("results");
       }
       // If voting is active but not all votes are in, go to voting
-      else if (currentRoom.is_voting_active) {
+      else if (currentRoom.is_voting_active && currentScreen !== "voting" && currentScreen !== "results") {
+        console.log('Voting is active, navigating to voting screen');
         setCurrentScreen("voting");
       }
+      // If voting is not active and we're on voting/results screens, go back to room lobby
+      else if (!currentRoom.is_voting_active && !currentRoom.resolved_at && (currentScreen === "voting" || currentScreen === "results")) {
+        console.log('Voting stopped, returning to room lobby');
+        setCurrentScreen("room-lobby");
+      }
     }
-  }, [currentRoom, currentScreen]);
+  }, [currentRoom?.is_voting_active, currentRoom?.resolved_at, currentRoom?.votes?.length, currentRoom?.room_participants?.length, currentRoomId, currentScreen]);
 
   const handleRoomUpdated = (updatedRoom: Room) => {
-    console.log('Room updated:', updatedRoom);
+    console.log('Room updated in navigation handler:', {
+      roomId: updatedRoom.id,
+      currentRoomId,
+      votingActive: updatedRoom.is_voting_active,
+      resolved: updatedRoom.resolved_at,
+      currentScreen
+    });
     
-    // Update the room state if it matches current room
-    if (currentRoomId === updatedRoom.id) {
-      const totalVotes = updatedRoom.votes?.length || 0;
-      const totalParticipants = updatedRoom.room_participants?.length || 0;
-      
-      // Auto-navigate based on updated room state
-      if (updatedRoom.resolved_at && currentScreen !== "results") {
-        setCurrentScreen("results");
-      } else if (updatedRoom.is_voting_active && totalVotes >= totalParticipants && totalParticipants > 0 && currentScreen !== "results") {
-        setCurrentScreen("results");
-      } else if (updatedRoom.is_voting_active && currentScreen === "room-lobby") {
-        setCurrentScreen("voting");
-      }
-    }
+    // This will trigger the useEffect above to handle navigation
+    // The room update will come through the rooms array from useRooms hook
   };
 
   const handleNavigateToRoom = (roomId: string) => {

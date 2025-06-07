@@ -6,6 +6,7 @@ import { Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Room, User, Screen } from "@/types";
+import { useEffect } from "react";
 
 interface VotingStatusProps {
   room: Room;
@@ -17,6 +18,16 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
   const { toast } = useToast();
   const isCreator = room.creator_id === user.id;
   const roomOptions = room.options || [];
+
+  // Auto-navigate to voting when voting becomes active
+  useEffect(() => {
+    if (room.is_voting_active && !isCreator) {
+      console.log('Voting is now active, auto-navigating to voting screen');
+      setTimeout(() => {
+        onNavigate("voting");
+      }, 1000); // Small delay for better UX
+    }
+  }, [room.is_voting_active, isCreator, onNavigate]);
 
   const handleStartVoting = async () => {
     if (roomOptions.length < 2) {
@@ -48,6 +59,7 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
         description: "All participants can now vote",
       });
       
+      // Navigate creator to voting screen as well
       onNavigate("voting");
     } catch (error) {
       console.error('Error starting voting:', error);
@@ -81,7 +93,7 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
             <div className="text-4xl mb-2">🗳️</div>
             <h3 className="text-xl font-bold text-green-600 mb-2">Voting is Active!</h3>
             <p className="text-lg text-gray-600 mb-4">
-              {isCreator ? "Participants are voting now..." : "Go to voting screen to cast your vote!"}
+              {isCreator ? "Participants are voting now..." : "Redirecting to voting..."}
             </p>
             {!isCreator && (
               <Button
