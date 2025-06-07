@@ -32,6 +32,9 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
   useEffect(() => {
     if (currentScreen !== "landing") {
       localStorage.setItem('diceyDecisions_currentScreen', currentScreen);
+    } else {
+      // Clear saved screen when on landing
+      localStorage.removeItem('diceyDecisions_currentScreen');
     }
   }, [currentScreen]);
 
@@ -173,6 +176,17 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
     }
   };
 
+  // Enhanced setCurrentScreen to handle back to home
+  const handleSetCurrentScreen = (screen: Screen) => {
+    if (screen === "landing") {
+      // Clear room state when going back to landing
+      setCurrentRoomId(null);
+      localStorage.removeItem('diceyDecisions_currentRoomId');
+      localStorage.removeItem('diceyDecisions_currentScreen');
+    }
+    setCurrentScreen(screen);
+  };
+
   // Clear saved state when user logs out
   useEffect(() => {
     if (!user && !authLoading) {
@@ -185,7 +199,7 @@ export const useNavigationHandler = ({ user, rooms, authLoading }: UseNavigation
 
   return {
     currentScreen,
-    setCurrentScreen,
+    setCurrentScreen: handleSetCurrentScreen,
     currentRoomId,
     setCurrentRoomId,
     initialRoomCode,
