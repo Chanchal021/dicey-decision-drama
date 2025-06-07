@@ -9,7 +9,11 @@ const Index = () => {
   console.log('Index component mounting...');
   
   const { user, loading: authLoading } = useAuth();
-  console.log('Auth state in Index:', { user: user?.id, authLoading });
+  console.log('Auth state in Index:', { 
+    user: user?.id, 
+    authLoading,
+    userEmail: user?.email 
+  });
   
   const { rooms, loading: roomsLoading, createRoom, joinRoom } = useRooms(user?.id);
   
@@ -36,10 +40,20 @@ const Index = () => {
     console.log('Showing loading screen - auth loading');
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400 flex items-center justify-center">
-        <div className="text-white text-2xl">Loading...</div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="text-white text-6xl mb-4 animate-spin">🎲</div>
+          <div className="text-white text-2xl font-bold">Loading DiceyDecisions...</div>
+          <div className="text-white/80 text-lg mt-2">Please wait while we set things up</div>
+        </motion.div>
       </div>
     );
   }
+
+  console.log('Auth loading complete, current screen:', currentScreen);
 
   const handleCreateRoom = async (roomData: any) => {
     console.log('Creating room with data:', roomData);
