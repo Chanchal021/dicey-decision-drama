@@ -25,9 +25,8 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
     if (room.is_voting_active && !isCreator && !hasNavigatedRef.current) {
       console.log('Voting is now active, auto-navigating to voting screen');
       hasNavigatedRef.current = true;
-      setTimeout(() => {
-        onNavigate("voting");
-      }, 1000); // Small delay for better UX
+      // Immediate navigation for better real-time experience
+      onNavigate("voting");
     }
     
     // Reset the flag when voting is no longer active
@@ -47,12 +46,18 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
     }
 
     try {
+      console.log('Starting voting for room:', room.id);
+      
       const { error } = await supabase
         .from('rooms')
-        .update({ is_voting_active: true })
+        .update({ 
+          is_voting_active: true,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', room.id);
 
       if (error) {
+        console.error('Error starting voting:', error);
         toast({
           title: "Failed to start voting",
           description: error.message,
@@ -61,6 +66,8 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
         return;
       }
 
+      console.log('Voting started successfully');
+      
       toast({
         title: "Voting started! 🗳️",
         description: "All participants can now vote",
@@ -70,6 +77,11 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
       onNavigate("voting");
     } catch (error) {
       console.error('Error starting voting:', error);
+      toast({
+        title: "Failed to start voting",
+        description: "Please try again",
+        variant: "destructive"
+      });
     }
   };
 

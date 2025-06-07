@@ -6,9 +6,16 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
   const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSubscribedRef = useRef(false);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 10;
 
   const setupChannel = useCallback(() => {
     if (!userId || !refetchRooms) return;
+    
+    // Prevent multiple subscriptions
+    if (channelRef.current && isSubscribedRef.current) {
+      return;
+    }
 
     // Clean up existing channel
     if (channelRef.current) {
@@ -19,29 +26,46 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
     console.log('Setting up real-time subscriptions for user:', userId);
 
     const channel = supabase
-      .channel(`user_rooms_${userId}`)
+      .channel(`user_rooms_${userId}_${Date.now()}`, {
+        config: {
+          broadcast: { self: false },
+          presence: { key: userId }
+        }
+      })
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'rooms' }, 
-        () => {
-          if (isSubscribedRef.current) refetchRooms();
+        (payload) => {
+          console.log('Rooms table change:', payload);
+          if (isSubscribedRef.current) {
+            setTimeout(() => refetchRooms(), 100);
+          }
         }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'room_participants' }, 
-        () => {
-          if (isSubscribedRef.current) refetchRooms();
+        (payload) => {
+          console.log('Room participants change:', payload);
+          if (isSubscribedRef.current) {
+            setTimeout(() => refetchRooms(), 100);
+          }
         }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'options' }, 
-        () => {
-          if (isSubscribedRef.current) refetchRooms();
+        (payload) => {
+          console.log('Options change:', payload);
+          if (isSubscribedRef.current) {
+            setTimeout(() => refetchRooms(), 100);
+          }
         }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'votes' }, 
-        () => {
-          if (isSubscribedRef.current) refetchRooms();
+        (payload) => {
+          console.log('Votes change:', payload);
+          if (isSubscribedRef.current) {
+            setTimeout(() => refetchRooms(), 100);
+          }
         }
       )
       .subscribe((status) => {
@@ -49,6 +73,7 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
         
         if (status === 'SUBSCRIBED') {
           isSubscribedRef.current = true;
+          reconnectAttempts.current = 0;
           // Clear any pending reconnect timeout
           if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
@@ -57,12 +82,17 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           isSubscribedRef.current = false;
           console.error('Real-time subscription error/timeout/closed:', status);
-          // Only attempt reconnect if we still have userId and refetchRooms
-          if (userId && refetchRooms && !reconnectTimeoutRef.current) {
+          
+          // Only attempt reconnect if we haven't exceeded max attempts
+          if (userId && refetchRooms && !reconnectTimeoutRef.current && reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current += 1;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000); // Exponential backoff, max 30s
+            console.log(`Attempting reconnect ${reconnectAttempts.current}/${maxReconnectAttempts} in ${delay}ms`);
+            
             reconnectTimeoutRef.current = setTimeout(() => {
               reconnectTimeoutRef.current = null;
               setupChannel();
-            }, 3000);
+            }, delay);
           }
         }
       });
@@ -72,11 +102,14 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
 
   const cleanup = useCallback(() => {
     isSubscribedRef.current = false;
+    reconnectAttempts.current = 0;
+    
     if (channelRef.current) {
       console.log('Cleaning up real-time subscriptions');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+    
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -87,4 +120,11 @@ export const useRoomsRealtime = (userId?: string, refetchRooms?: () => void) => 
     setupChannel();
     return cleanup;
   }, [setupChannel, cleanup]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
 };
