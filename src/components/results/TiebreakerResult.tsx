@@ -3,12 +3,11 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home } from "lucide-react";
-import { Screen } from "@/types";
 
 interface TiebreakerResultProps {
   winner: string;
   method: string;
-  onNavigate: (screen: Screen) => void;
+  onNavigate: () => void;
 }
 
 const TiebreakerResult = ({ winner, method, onNavigate }: TiebreakerResultProps) => {
@@ -50,7 +49,7 @@ const TiebreakerResult = ({ winner, method, onNavigate }: TiebreakerResultProps)
               Decided by {getMethodDisplay()}
             </p>
             <Button
-              onClick={() => onNavigate("dashboard")}
+              onClick={onNavigate}
               className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold text-xl px-8 py-4 rounded-full"
             >
               <Home className="w-6 h-6 mr-2" />

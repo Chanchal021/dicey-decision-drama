@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,17 +100,22 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
         console.error('Error updating room:', error);
       }
 
-      setTimeout(() => {
-        setIsAnimating(false);
-        const updatedRoom = {
-          ...room,
-          final_option_id: winningOption?.id,
-          tiebreaker_used: method,
-          resolved_at: new Date().toISOString()
-        };
-        onComplete(updatedRoom);
-      }, 2000);
+      // Remove the automatic timeout - let user manually exit
+      setIsAnimating(false);
     }, 3000);
+  };
+
+  const handleTiebreakerExit = () => {
+    if (tiebreakerResult && room) {
+      const winningOption = room.options?.find(opt => opt.text === tiebreakerResult);
+      const updatedRoom = {
+        ...room,
+        final_option_id: winningOption?.id,
+        tiebreaker_used: room.tiebreaker_used,
+        resolved_at: new Date().toISOString()
+      };
+      onComplete(updatedRoom);
+    }
   };
 
   const handleFinish = async (winner: string) => {
@@ -161,7 +165,7 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
       <TiebreakerResult 
         winner={tiebreakerResult}
         method={room.tiebreaker_used || ''}
-        onNavigate={onNavigate}
+        onNavigate={handleTiebreakerExit}
       />
     );
   }
