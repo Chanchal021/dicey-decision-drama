@@ -19,15 +19,23 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
     }
 
     try {
+      console.log('=== ROOM CREATION START ===');
+      console.log('User ID:', userId);
+      console.log('Room data:', roomData);
+
       // Ensure the user profile exists
       const profileReady = await ensureUserProfile(userId);
       if (!profileReady) {
+        console.log('❌ Profile creation failed');
         return null;
       }
 
       // Generate a room code using the database function
+      console.log('🎲 Generating room code...');
       const { data: codeData, error: codeError } = await supabase
         .rpc('generate_room_code');
+
+      console.log('Room code generation result:', { codeData, codeError });
 
       if (codeError || !codeData) {
         console.error('Error generating room code:', codeError);
@@ -39,7 +47,10 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         return null;
       }
 
+      console.log('✅ Generated room code:', codeData);
+
       // Create the room with the generated code
+      console.log('🏠 Creating room in database...');
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .insert({
@@ -52,6 +63,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .select()
         .single();
 
+      console.log('Room creation result:', { room, roomError });
+
       if (roomError) {
         console.error('Error creating room:', roomError);
         toast({
@@ -62,7 +75,10 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         return null;
       }
 
+      console.log('✅ Room created successfully:', room);
+
       // Add creator as first participant
+      console.log('👤 Adding creator as participant...');
       const { error: participantError } = await supabase
         .from('room_participants')
         .insert({
@@ -70,6 +86,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           user_id: userId,
           display_name: roomData.title // Use room title as creator's display name for now
         });
+
+      console.log('Participant addition result:', { participantError });
 
       if (participantError) {
         console.error('Error adding creator as participant:', participantError);
@@ -79,10 +97,13 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           description: "Room created but failed to add you as participant",
           variant: "destructive"
         });
+      } else {
+        console.log('✅ Creator added as participant');
       }
 
       // Add options to the room
       if (roomData.options && roomData.options.length > 0) {
+        console.log('📝 Adding options to room...');
         const optionsToInsert = roomData.options.map(option => ({
           room_id: room.id,
           text: option,
@@ -93,6 +114,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
           .from('options')
           .insert(optionsToInsert);
 
+        console.log('Options addition result:', { optionsError });
+
         if (optionsError) {
           console.error('Error adding options:', optionsError);
           toast({
@@ -100,6 +123,8 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
             description: "Room created but some options failed to save",
             variant: "destructive"
           });
+        } else {
+          console.log('✅ Options added successfully');
         }
       }
 
@@ -112,6 +137,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         refetchRooms();
       }
 
+      console.log('=== ROOM CREATION END ===');
       return room;
     } catch (error) {
       console.error('Error creating room:', error);
@@ -173,6 +199,16 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
 
       // Step 1: Find the room with detailed debugging
       console.log('🔍 Searching for room in database...');
+      
+      // First, let's try to get all rooms without filtering to see if RLS is the issue
+      console.log('🔍 Checking all rooms visibility...');
+      const { data: allRoomsCheck, error: allRoomsError } = await supabase
+        .from('rooms')
+        .select('code, title, creator_id, is_open')
+        .limit(10);
+      
+      console.log('All rooms check:', { allRoomsCheck, allRoomsError });
+
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .select('*')
@@ -338,7 +374,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
         .from('rooms')
         .select(`
           *,
-          room_participants (
+          room_participants!room_participants_room_id_fkey (
             id,
             user_id,
             display_name,
@@ -350,7 +386,7 @@ export const useRoomOperations = (userId?: string, refetchRooms?: () => void) =>
             submitted_by,
             created_at
           ),
-          votes (
+          votes!votes_room_id_fkey (
             id,
             user_id,
             option_id,
