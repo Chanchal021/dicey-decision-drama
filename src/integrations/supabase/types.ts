@@ -368,7 +368,7 @@ export type Database = {
         Returns: string
       }
       user_has_room_access: {
-        Args: { room_id: string; user_id: string }
+        Args: { target_room_id: string; target_user_id: string }
         Returns: boolean
       }
     }

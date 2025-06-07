@@ -46,11 +46,12 @@ export const useRoomData = (userId?: string) => {
         return;
       }
 
+      // Fetch rooms with explicit foreign key relationships to avoid ambiguity
       const { data, error } = await supabase
         .from('rooms')
         .select(`
           *,
-          room_participants (
+          room_participants!room_participants_room_id_fkey (
             id,
             user_id,
             display_name,
@@ -62,7 +63,7 @@ export const useRoomData = (userId?: string) => {
             submitted_by,
             created_at
           ),
-          votes (
+          votes!votes_room_id_fkey (
             id,
             user_id,
             option_id,

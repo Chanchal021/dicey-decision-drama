@@ -33,19 +33,19 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
           .from('rooms')
           .select(`
             *,
-            room_participants (
+            room_participants!room_participants_room_id_fkey (
               id,
               user_id,
               display_name,
               joined_at
             ),
-            options (
+            options!options_room_id_fkey (
               id,
               text,
               submitted_by,
               created_at
             ),
-            votes (
+            votes!votes_room_id_fkey (
               id,
               user_id,
               option_id,

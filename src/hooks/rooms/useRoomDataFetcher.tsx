@@ -7,7 +7,7 @@ export const fetchAndFormatRoom = async (roomId: string): Promise<Room | null> =
     .from('rooms')
     .select(`
       *,
-      room_participants (
+      room_participants!room_participants_room_id_fkey (
         id,
         user_id,
         display_name,
@@ -19,7 +19,7 @@ export const fetchAndFormatRoom = async (roomId: string): Promise<Room | null> =
         submitted_by,
         created_at
       ),
-      votes (
+      votes!votes_room_id_fkey (
         id,
         user_id,
         option_id,
