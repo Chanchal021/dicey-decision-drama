@@ -30,12 +30,14 @@ export const useResultsLogic = ({ room, user, onComplete }: UseResultsLogicProps
     setVoteResults(results);
   }, [room]);
 
+  // Calculate derived values
+  const sortedResults = Object.entries(voteResults).sort(([,a], [,b]) => b - a);
+  const maxVotes = Math.max(...Object.values(voteResults));
+  const winners = sortedResults.filter(([,votes]) => votes === maxVotes);
+  const hasTie = winners.length > 1;
+
   const handleTiebreaker = async (method: "dice" | "spinner" | "coin") => {
     if (!room || !room.options) return;
-    
-    const sortedResults = Object.entries(voteResults).sort(([,a], [,b]) => b - a);
-    const maxVotes = Math.max(...Object.values(voteResults));
-    const winners = sortedResults.filter(([,votes]) => votes === maxVotes);
     
     if (winners.length === 0) {
       toast({
@@ -79,7 +81,6 @@ export const useResultsLogic = ({ room, user, onComplete }: UseResultsLogicProps
         console.error('Error updating room:', error);
       }
 
-      // Remove the automatic timeout - let user manually exit
       setIsAnimating(false);
     }, 3000);
   };
@@ -138,6 +139,10 @@ export const useResultsLogic = ({ room, user, onComplete }: UseResultsLogicProps
     tiebreakerResult,
     isAnimating,
     voteResults,
+    sortedResults,
+    maxVotes,
+    winners,
+    hasTie,
     handleTiebreaker,
     handleTiebreakerExit,
     handleFinish

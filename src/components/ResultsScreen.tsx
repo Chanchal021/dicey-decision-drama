@@ -17,6 +17,10 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
     tiebreakerResult,
     isAnimating,
     voteResults,
+    sortedResults,
+    maxVotes,
+    winners,
+    hasTie,
     handleTiebreaker,
     handleTiebreakerExit,
     handleFinish
@@ -29,16 +33,10 @@ const ResultsScreen = ({ room, user, onComplete, onNavigate }: ResultsScreenProp
     return <ErrorDisplay type="no-options" onNavigate={onNavigate} />;
   }
 
-  const sortedResults = Object.entries(voteResults).sort(([,a], [,b]) => b - a);
-  
   // Additional safety checks
   if (sortedResults.length === 0) {
     return <ErrorDisplay type="processing" onNavigate={onNavigate} />;
   }
-
-  const maxVotes = Math.max(...Object.values(voteResults));
-  const winners = sortedResults.filter(([,votes]) => votes === maxVotes);
-  const hasTie = winners.length > 1;
 
   return (
     <ResultsContent
