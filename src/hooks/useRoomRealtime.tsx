@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Room } from '@/types';
 
@@ -11,9 +11,10 @@ interface UseRoomRealtimeProps {
 export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) => {
   const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSubscribedRef = useRef(false);
 
-  const fetchRoomData = async () => {
-    if (!roomId) return;
+  const fetchRoomData = useCallback(async () => {
+    if (!roomId || !isSubscribedRef.current) return;
     
     try {
       const { data: room, error } = await supabase
@@ -47,7 +48,7 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         return;
       }
 
-      if (room) {
+      if (room && isSubscribedRef.current) {
         const safeRoom: Room = {
           ...room,
           room_participants: Array.isArray(room.room_participants) ? room.room_participants : [],
@@ -55,57 +56,47 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
           votes: Array.isArray(room.votes) ? room.votes : []
         };
         
-        console.log('Room data updated via real-time:', safeRoom);
         onRoomUpdate(safeRoom);
       }
     } catch (error) {
       console.error('Error in fetchRoomData:', error);
     }
-  };
+  }, [roomId, onRoomUpdate]);
 
-  const setupChannel = () => {
-    if (!roomId) {
-      console.log('No room ID, skipping subscription');
-      return;
+  const setupChannel = useCallback(() => {
+    if (!roomId) return;
+
+    // Clean up existing channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
     }
 
     console.log('Setting up real-time subscription for room:', roomId);
 
     const channel = supabase
-      .channel(`room_${roomId}_${Date.now()}`) // Add timestamp for uniqueness
+      .channel(`room_${roomId}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` }, 
-        (payload) => {
-          console.log('Room table changed:', payload);
-          fetchRoomData();
-        }
+        () => fetchRoomData()
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'room_participants', filter: `room_id=eq.${roomId}` }, 
-        (payload) => {
-          console.log('Room participants changed:', payload);
-          fetchRoomData();
-        }
+        () => fetchRoomData()
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'options', filter: `room_id=eq.${roomId}` }, 
-        (payload) => {
-          console.log('Options changed:', payload);
-          fetchRoomData();
-        }
+        () => fetchRoomData()
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'votes', filter: `room_id=eq.${roomId}` }, 
-        (payload) => {
-          console.log('Votes changed:', payload);
-          fetchRoomData();
-        }
+        () => fetchRoomData()
       )
       .subscribe((status) => {
         console.log('Room subscription status:', status);
         
         if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to room updates');
+          isSubscribedRef.current = true;
           // Clear any pending reconnect timeout
           if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
@@ -114,23 +105,23 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
           // Fetch initial data
           fetchRoomData();
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          isSubscribedRef.current = false;
           console.error('Room subscription error/timeout/closed:', status);
-          // Attempt to reconnect after a delay
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
+          // Only attempt reconnect if we still have a roomId
+          if (roomId && !reconnectTimeoutRef.current) {
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null;
+              setupChannel();
+            }, 2000); // Reduced timeout for faster reconnection
           }
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('Attempting to reconnect...');
-            cleanup();
-            setupChannel();
-          }, 3000);
         }
       });
 
     channelRef.current = channel;
-  };
+  }, [roomId, fetchRoomData]);
 
-  const cleanup = () => {
+  const cleanup = useCallback(() => {
+    isSubscribedRef.current = false;
     if (channelRef.current) {
       console.log('Cleaning up room subscription');
       supabase.removeChannel(channelRef.current);
@@ -140,15 +131,10 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Clean up previous subscription
-    cleanup();
-    
-    // Set up new subscription
     setupChannel();
-
     return cleanup;
-  }, [roomId, onRoomUpdate]);
+  }, [setupChannel, cleanup]);
 };

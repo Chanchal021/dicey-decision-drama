@@ -6,7 +6,7 @@ import { Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Room, User, Screen } from "@/types";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface VotingStatusProps {
   room: Room;
@@ -18,14 +18,21 @@ const VotingStatus = ({ room, user, onNavigate }: VotingStatusProps) => {
   const { toast } = useToast();
   const isCreator = room.creator_id === user.id;
   const roomOptions = room.options || [];
+  const hasNavigatedRef = useRef(false);
 
   // Auto-navigate to voting when voting becomes active
   useEffect(() => {
-    if (room.is_voting_active && !isCreator) {
+    if (room.is_voting_active && !isCreator && !hasNavigatedRef.current) {
       console.log('Voting is now active, auto-navigating to voting screen');
+      hasNavigatedRef.current = true;
       setTimeout(() => {
         onNavigate("voting");
       }, 1000); // Small delay for better UX
+    }
+    
+    // Reset the flag when voting is no longer active
+    if (!room.is_voting_active) {
+      hasNavigatedRef.current = false;
     }
   }, [room.is_voting_active, isCreator, onNavigate]);
 
