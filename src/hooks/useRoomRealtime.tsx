@@ -61,8 +61,16 @@ export const useRoomRealtime = ({ roomId, onRoomUpdate }: UseRoomRealtimeProps) 
         }
 
         if (room) {
-          console.log('Room data updated:', room);
-          onRoomUpdate(room);
+          // Ensure all arrays are properly typed and not error objects
+          const safeRoom: Room = {
+            ...room,
+            room_participants: Array.isArray(room.room_participants) ? room.room_participants : [],
+            options: Array.isArray(room.options) ? room.options : [],
+            votes: Array.isArray(room.votes) ? room.votes : []
+          };
+          
+          console.log('Room data updated:', safeRoom);
+          onRoomUpdate(safeRoom);
         }
       } catch (error) {
         console.error('Error in fetchRoomData:', error);
